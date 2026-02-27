@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { ShieldCheck, LayoutGrid, Activity, BookOpen, Globe, Code, ShieldAlert } from "lucide-react";
+import { ShieldCheck, LayoutGrid, Activity, BookOpen, Globe, Code, ShieldAlert, Database } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ThreatTicker } from "@/components/threat-ticker";
@@ -45,12 +45,15 @@ export default function RootLayout({
               <nav className="hidden md:flex items-center gap-10">
                 <NavLink href="/" label="Console" icon={<Activity size={12} />} />
                 <NavLink href="/threats" label="Threat_Feed" icon={<LayoutGrid size={12} />} />
-                <NavLink href="/sovereignty" label="Protocols" icon={<BookOpen size={12} />} />
+                <NavLink href="/dashboard" label="Dashboard" icon={<Database size={12} />} />
                 <NavLink href="/api-docs" label="Uplink" icon={<Code size={12} />} />
               </nav>
 
               <div className="flex items-center gap-6">
                 <ThemeToggle />
+                <Link href="/dashboard" className="px-6 py-2 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+                  Login
+                </Link>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Grid_Online</span>
@@ -66,9 +69,7 @@ export default function RootLayout({
           </main>
 
           <footer className="py-24 border-t border-border bg-card relative z-10 overflow-hidden">
-            {/* Design Accents */}
             <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
-            
             <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-16">
               <div className="space-y-8">
                 <div className="flex items-center gap-3">
@@ -79,18 +80,15 @@ export default function RootLayout({
                   Engineering digital immunity for the next generation. Join the Syndicate to protect the community.
                 </p>
               </div>
-              
               <FooterSection title="Infrastucture">
                 <li><Link href="/" className="hover:text-primary transition-colors">Forensic Console</Link></li>
                 <li><Link href="/threats" className="hover:text-primary transition-colors">Global Threat Board</Link></li>
                 <li><Link href="/api-docs" className="hover:text-primary transition-colors">API Dispatch</Link></li>
               </FooterSection>
-
               <FooterSection title="Governance">
                 <li><Link href="/manifesto" className="hover:text-primary transition-colors">Syndicate Manifesto</Link></li>
                 <li><Link href="/sovereignty" className="hover:text-primary transition-colors">Privacy Sovereignty</Link></li>
               </FooterSection>
-
               <div className="space-y-6">
                 <h4 className="text-[10px] font-black uppercase text-foreground tracking-[0.4em]">System Status</h4>
                 <div className="p-6 rounded-[2rem] bg-accent/50 border border-border space-y-4">
