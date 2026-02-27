@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { AlertTriangle, ShieldCheck, Search, Filter, Globe, Activity, Loader2, Database, ShieldAlert, Radio } from "lucide-react"
+import { AlertTriangle, ShieldCheck, Search, Globe, Activity, Loader2, ShieldAlert, Radio, Map, BarChart3, Users } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 import { motion } from "framer-motion"
 
@@ -12,14 +12,12 @@ const getSupabase = () => {
   return createClient(url, key);
 }
 
-export default function ThreatFeed() {
+export default function IntelligenceHub() {
   const [threats, setThreats] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [view, setView] = useState("scams") // "scams" | "verified"
 
-  useEffect(() => {
-    fetchThreats()
-  }, [])
+  useEffect(() => { fetchThreats() }, [])
 
   const fetchThreats = async () => {
     const supabase = getSupabase();
@@ -29,89 +27,90 @@ export default function ThreatFeed() {
     setIsLoading(false)
   }
 
-  const filteredThreats = threats.filter(t => 
-    t.brand_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.domain?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
   return (
-    <div className="max-w-7xl mx-auto px-6 py-32 space-y-12 bg-background text-foreground">
-      {/* Dynamic Header */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-10">
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-red-500/5 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.4em] shadow-[0_0_20px_rgba(239,68,68,0.1)]">
-            <Radio className="h-3 w-3 animate-ping" /> Synchronized Defense Feed
+    <div className="max-w-7xl mx-auto px-6 py-32 space-y-16">
+      {/* 1. TOP STATS & MAP VISUAL */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 p-10 rounded-[3rem] bg-card/40 backdrop-blur-3xl border border-border relative overflow-hidden group">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#6366f10a,transparent_70%)]" />
+          <div className="relative z-10 space-y-8">
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest">
+                  <Map className="h-3 w-3" /> Global_Surveillance_Node
+                </div>
+                <h2 className="text-4xl font-black italic tracking-tighter uppercase">Syndicate <span className="text-primary">Intelligence.</span></h2>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Active Monitors</p>
+                <div className="text-2xl font-mono font-bold text-foreground">14,209</div>
+              </div>
+            </div>
+            
+            {/* Immersive SVG Map Placeholder */}
+            <div className="h-64 w-full bg-zinc-950/50 rounded-3xl border border-white/5 relative flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cyber-glow.png')]" />
+              <Activity className="h-32 w-32 text-primary opacity-5 animate-pulse" />
+              <div className="absolute top-1/4 left-1/3 h-2 w-2 rounded-full bg-red-500 animate-ping" />
+              <div className="absolute bottom-1/3 right-1/4 h-2 w-2 rounded-full bg-red-500 animate-ping delay-700" />
+              <div className="absolute top-1/2 right-1/2 h-2 w-2 rounded-full bg-emerald-500 animate-ping delay-300" />
+              <p className="font-mono text-[10px] text-zinc-600 uppercase tracking-[0.5em] animate-pulse">Monitoring Global Career Traffic...</p>
+            </div>
           </div>
-          <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase leading-[0.8]">
-            Global <span className="text-red-500">Threat</span><br />Manifest.
-          </h1>
-          <p className="text-muted-foreground font-medium italic max-w-xl text-lg leading-relaxed">
-            "Direct telemetry from the Syndicate. Every signature represents a neutralized fraud attempt shared by your peers."
-          </p>
         </div>
 
-        <div className="relative w-full md:w-[400px] group">
-          <div className="absolute inset-0 bg-primary/5 blur-xl group-focus-within:bg-primary/10 transition-all rounded-3xl" />
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
-          <input 
-            type="text"
-            placeholder="FILTER BY BRAND OR DOMAIN..."
-            className="w-full h-16 bg-card border-2 border-border rounded-2xl pl-14 pr-8 text-xs font-mono font-bold text-foreground outline-none focus:border-primary/50 transition-all relative z-10 shadow-2xl"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="p-10 rounded-[3rem] bg-primary border border-primary text-background space-y-10 shadow-2xl shadow-primary/20">
+          <ShieldAlert size={48} className="animate-bounce" />
+          <div className="space-y-4">
+            <h3 className="text-3xl font-black uppercase italic leading-none">Protect The<br />Immune System.</h3>
+            <p className="text-sm font-bold opacity-80 italic">"Every signature you share acts as a collective antibody, neutralizing fraud before it reaches your peers."</p>
+          </div>
+          <button className="w-full h-14 bg-background text-foreground rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all">Download Protocol v2.5</button>
         </div>
       </div>
 
-      {/* The Intelligence Grid */}
-      <div className="grid gap-6">
+      {/* 2. REGISTRY FILTER */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="flex gap-4 p-1.5 rounded-2xl bg-card border border-border w-fit shadow-inner">
+          <button onClick={() => setView("scams")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'scams' ? 'bg-red-500 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}>
+            Threat_Manifest
+          </button>
+          <button onClick={() => setView("verified")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'verified' ? 'bg-emerald-500 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}>
+            Verified_Clearance
+          </button>
+        </div>
+        <div className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.3em] flex items-center gap-2">
+          <Users className="h-3 w-3" /> Consensus Weight: <span className="text-primary">99.2%</span>
+        </div>
+      </div>
+
+      {/* 3. THE DATA FEED */}
+      <div className="grid gap-4">
         {isLoading ? (
-          <div className="py-48 flex flex-col items-center justify-center space-y-6 text-muted-foreground animate-pulse font-mono">
-            <Loader2 className="h-16 w-16 animate-spin" />
-            <p className="text-[10px] font-black uppercase tracking-[0.5em]">Establishing_Uplink...</p>
+          <div className="py-32 flex justify-center items-center gap-4 text-muted-foreground font-mono uppercase text-xs animate-pulse">
+            <Loader2 className="animate-spin" /> Uplinking to Syndicate Database...
           </div>
-        ) : filteredThreats.length > 0 ? filteredThreats.map((threat, idx) => (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            key={threat.id} 
-            className="p-8 rounded-[2.5rem] bg-card/50 backdrop-blur-3xl border border-border hover:border-red-500/30 transition-all flex flex-col md:flex-row items-center justify-between gap-10 group relative overflow-hidden"
-          >
-            <div className="absolute left-0 top-0 w-1 h-full bg-red-500/20 group-hover:bg-red-500 transition-all duration-500" />
-            
-            <div className="flex items-center gap-8 w-full">
-              <div className="h-16 w-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20 group-hover:scale-110 transition-transform shadow-2xl">
-                <ShieldAlert className="h-8 w-8" />
+        ) : threats.length > 0 ? threats.map((t, i) => (
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} key={t.id} className="p-6 rounded-[2rem] bg-card border border-border hover:border-primary/30 transition-all flex flex-col md:flex-row items-center justify-between gap-8 group">
+            <div className="flex items-center gap-6 w-full">
+              <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border ${view === 'scams' ? 'bg-red-500/5 text-red-500 border-red-500/20' : 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20'}`}>
+                {view === 'scams' ? <ShieldAlert size={24} /> : <ShieldCheck size={24} />}
               </div>
-              <div className="space-y-2 min-w-0 flex-1">
-                <h3 className="text-2xl font-black text-foreground uppercase italic truncate tracking-tight">{threat.brand_name}</h3>
-                <div className="flex items-center gap-4 text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-                  <span className="flex items-center gap-2 px-3 py-1 rounded-lg bg-accent border border-border"><Globe className="h-3 w-3 text-primary" /> {threat.domain}</span>
-                  <span className="px-3 py-1 rounded-lg bg-red-500/5 border border-red-500/10 text-red-500">{threat.category}</span>
-                </div>
+              <div>
+                <h4 className="text-xl font-black uppercase italic text-foreground">{t.brand_name}</h4>
+                <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase tracking-widest">{t.domain} // {t.category}</p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-10 shrink-0 w-full md:w-auto border-t md:border-t-0 md:border-l border-border pt-6 md:pt-0 md:pl-10">
+            <div className="flex items-center gap-12 w-full md:w-auto">
               <div className="text-right">
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest opacity-60">Status</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-xs font-bold text-foreground">NEUTRALIZED</p>
-                </div>
+                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Syndicate Trust</p>
+                <div className="text-xl font-black text-foreground font-mono">{view === 'scams' ? '0.0%' : '98.4%'}</div>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest opacity-60">Timestamp</p>
-                <p className="text-xs font-mono font-bold text-foreground mt-1">{new Date(threat.created_at).toLocaleDateString()}</p>
-              </div>
+              <div className="h-10 w-[1px] bg-border" />
+              <button className="px-6 py-2 rounded-xl bg-accent border border-border text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">View_Evidence</button>
             </div>
           </motion.div>
-        )) : (
-          <div className="py-48 text-center opacity-20 italic font-black text-4xl uppercase tracking-tighter">
-            No_Threats_Detected_In_Grid
-          </div>
-        )}
+        )) : <div className="py-32 text-center text-muted-foreground italic">"Syndicate registry currently empty. Run a scan to populate the manifest."</div>}
       </div>
     </div>
   )

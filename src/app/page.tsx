@@ -236,6 +236,18 @@ export default function Home() {
                         </div>
                       </div>
                       <p className="text-xl font-medium text-foreground italic leading-relaxed border-l-4 border-primary pl-8 py-2">"{result.analysis}"</p>
+                      
+                      <div className="flex items-center gap-6 p-6 rounded-2xl bg-background border border-border">
+                        <div className="h-12 w-12 rounded-full border-2 border-primary/20 flex items-center justify-center relative">
+                          <Activity size={20} className="text-primary animate-pulse" />
+                          <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Syndicate Consensus</p>
+                          <p className="text-sm font-bold text-foreground">98.4% of nodes verified this signature</p>
+                        </div>
+                      </div>
+
                       <DispatchCard result={result} brandName={brandName || "Untrusted_Origin"} />
                     </div>
                   </motion.div>
@@ -246,8 +258,19 @@ export default function Home() {
             <div className="lg:col-span-4 space-y-6">
               <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative overflow-hidden flex flex-col h-full min-h-[600px]">
                 <div className="flex items-center justify-between border-b border-border pb-6 mb-8 shrink-0">
-                  <div className="flex items-center gap-3"><Network className="h-5 w-5 text-primary" /><span className="text-xs font-black uppercase tracking-[0.3em] text-foreground">Grid_Status</span></div>
+                  <div className="flex items-center gap-3">
+                    <Network className="h-5 w-5 text-primary" />
+                    <span className="text-xs font-black uppercase tracking-[0.3em] text-foreground">Grid_Status</span>
+                  </div>
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                </div>
+
+                <div className="mb-8 p-4 rounded-2xl bg-primary text-background flex items-center gap-4 shadow-xl shadow-primary/20">
+                  <ShieldCheck size={24} />
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-widest leading-none">Syndicate_Status</p>
+                    <p className="text-sm font-black uppercase italic leading-none mt-1">Verified Authority</p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-8 shrink-0">
                   <div className="p-5 rounded-2xl bg-background border border-border flex flex-col justify-center">
