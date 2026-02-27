@@ -6,10 +6,13 @@ import { motion } from "framer-motion"
 import { ScamAlertCard } from "@/components/scam-alert-card"
 import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Lazy initialization helper
+const getSupabase = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 export default function Home() {
   const [content, setContent] = useState("")
@@ -21,15 +24,20 @@ export default function Home() {
   const [activeProtocol, setActiveProtocol] = useState("Offer")
 
   useEffect(() => {
-    fetchCommunityData()
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    fetchCommunityData(supabase)
+    
     const channel = supabase.channel('threats')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
-        fetchCommunityData()
+        fetchCommunityData(supabase)
       }).subscribe()
+      
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const fetchCommunityData = async () => {
+  const fetchCommunityData = async (supabase: any) => {
     const { data } = await supabase.from('community_threats').select('*').order('created_at', { ascending: false }).limit(3)
     const { count } = await supabase.from('community_threats').select('*', { count: 'exact', head: true })
     if (data) setRecentThreats(data)
@@ -123,7 +131,7 @@ export default function Home() {
                       <h4 className="text-xl font-black uppercase italic tracking-widest">Verdict: {result.verdict}</h4>
                       <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-black">{result.confidence}%</div>
                     </div>
-                    <p className="text-sm text-zinc-300 italic leading-relaxed">"{result.analysis}"</p>
+                    <p className="text-sm font-medium text-zinc-300 italic leading-relaxed">"{result.analysis}"</p>
                     {result.verdict === "SCAM" && <ScamAlertCard result={result} brandName={brandName || "Unknown Node"} />}
                   </motion.div>
                 )}

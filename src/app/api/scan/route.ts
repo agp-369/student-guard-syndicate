@@ -2,12 +2,6 @@ import { NextResponse } from "next/server";
 import { generateAIResponse } from "@/lib/ai";
 import { createClient } from "@supabase/supabase-js";
 
-// Non-auth client for public community sharing
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export async function POST(req: Request) {
   try {
     const { content, brandName } = await req.json();
@@ -22,8 +16,12 @@ export async function POST(req: Request) {
     const response = await generateAIResponse(content, systemInstruction);
     const result = JSON.parse(response || "{}");
 
-    // 🛡️ SYNDICATE LOGIC: If it's a scam, share it with the community
-    if (result.verdict === "SCAM") {
+    // 🛡️ Initialize Supabase inside the function to prevent build errors
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseKey && result.verdict === "SCAM") {
+      const supabase = createClient(supabaseUrl, supabaseKey);
       await supabase.from('community_threats').insert({
         brand_name: brandName || "Unknown Entity",
         domain: content.match(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g)?.[0] || "Undisclosed Node",

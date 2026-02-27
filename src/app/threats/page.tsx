@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { AlertTriangle, ShieldCheck, Search, Filter, Globe, Activity, Loader2 } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const getSupabase = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 export default function ThreatFeed() {
   const [threats, setThreats] = useState<any[]>([])
@@ -19,6 +21,11 @@ export default function ThreatFeed() {
   }, [])
 
   const fetchThreats = async () => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
     const { data } = await supabase.from('community_threats').select('*').order('created_at', { ascending: false })
     if (data) setThreats(data)
     setIsLoading(false)
