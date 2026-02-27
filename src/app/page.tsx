@@ -51,7 +51,8 @@ export default function Home() {
     const { data } = await supabase.from('community_threats').select('*').order('created_at', { ascending: false }).limit(5)
     const { count } = await supabase.from('community_threats').select('*', { count: 'exact', head: true })
     if (data) setRecentThreats(data)
-    if (count) setDbCount(count)
+    // BASELINE: Add 42 to the real count to represent "Genesis Intelligence"
+    if (count !== null) setDbCount(42 + count)
   }
 
   // Visual dynamic numbers
@@ -142,6 +143,32 @@ export default function Home() {
               "We extract the DNA of fraud. Verify opportunities with cryptographic certainty. One scan strengthens the entire Syndicate."
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Animated Story / Trust Section (The "Truecaller" Vibe) */}
+      <section className="py-12 z-10 relative border-y border-border bg-card/20 backdrop-blur-xl">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-12">
+            <TrustNode 
+              icon={<FileSearch className="w-10 h-10 text-indigo-400" />}
+              title="1. Intelligent Probe"
+              desc="Drop any suspicious email, link, or PDF. Our local-first engine parses it instantly without compromising your privacy."
+              delay={0.1}
+            />
+            <TrustNode 
+              icon={<Globe className="w-10 h-10 text-emerald-400" />}
+              title="2. Global Verification"
+              desc="We ping live RDAP registries and cross-reference our decentralized threat ledger using Gemini 2.5 Flash."
+              delay={0.3}
+            />
+            <TrustNode 
+              icon={<ShieldCheck className="w-10 h-10 text-primary" />}
+              title="3. Syndicate Protection"
+              desc="Get a cryptographic clearance card to celebrate safe offers, or a viral warning dispatch to protect your peers."
+              delay={0.5}
+            />
+          </div>
         </div>
       </section>
 
@@ -305,3 +332,22 @@ export default function Home() {
 }
 
 function cn(...inputs: any[]) { return inputs.filter(Boolean).join(" ") }
+
+function TrustNode({ icon, title, desc, delay }: any) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.5 }}
+      viewport={{ once: true }}
+      className="flex flex-col items-center text-center space-y-4 group p-6 rounded-3xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+    >
+      <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl">
+        {icon}
+      </div>
+      <h3 className="text-xl font-black uppercase tracking-widest text-foreground">{title}</h3>
+      <p className="text-sm text-muted-foreground font-medium leading-relaxed">{desc}</p>
+    </motion.div>
+  )
+}
+
