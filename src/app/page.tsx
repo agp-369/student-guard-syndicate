@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ShieldCheck, Zap, Activity, Users, AlertTriangle, FileSearch, Loader2, Globe, Terminal, ShieldAlert, Cpu, FileUp, Database, Radio, Network, CheckCircle2 } from "lucide-react"
+import { ShieldCheck, Zap, Activity, Users, AlertTriangle, FileSearch, Loader2, Globe, Terminal, ShieldAlert, Cpu, FileUp, Database, Radio, Network, CheckCircle2, Fingerprint } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { DispatchCard } from "@/components/scam-alert-card"
 import { createClient } from "@supabase/supabase-js"
@@ -16,6 +16,7 @@ const getSupabase = () => {
 const SCAN_STEPS = [
   "UPLINK: Establishing Sovereign Handshake...",
   "EXTRACT: Isolating textual artifacts...",
+  "METADATA: Analyzing file header forgeries...",
   "PROBE: Pinging RDAP domain registries...",
   "ANALYZE: Comparing category heuristics...",
   "SYNTHESIZE: Engaging Gemini 2.5 Flash Core...",
@@ -25,6 +26,7 @@ const SCAN_STEPS = [
 export default function Home() {
   const [content, setContent] = useState("")
   const [brandName, setBrandName] = useState("")
+  const [fileMeta, setFileMeta] = useState<any>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [scanStep, setScanStep] = useState(0)
   const [result, setResult] = useState<any>(null)
@@ -32,7 +34,7 @@ export default function Home() {
   const [dbCount, setDbCount] = useState(0)
   const [isParsingPdf, setIsParsingPdf] = useState(false)
   const [nodeHealth, setNodeHealth] = useState(100)
-  const [activeNodes, setActiveNodes] = useState(342) // Dynamic visual flavor
+  const [activeNodes, setActiveNodes] = useState(342)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -40,10 +42,7 @@ export default function Home() {
     const supabase = getSupabase();
     if (!supabase) return;
     fetchCommunityData(supabase)
-    const channel = supabase.channel('threats')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
-        fetchCommunityData(supabase)
-      }).subscribe()
+    const channel = supabase.channel('threats').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => { fetchCommunityData(supabase) }).subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
 
@@ -51,11 +50,9 @@ export default function Home() {
     const { data } = await supabase.from('community_threats').select('*').order('created_at', { ascending: false }).limit(5)
     const { count } = await supabase.from('community_threats').select('*', { count: 'exact', head: true })
     if (data) setRecentThreats(data)
-    // BASELINE: Add 42 to the real count to represent "Genesis Intelligence"
     if (count !== null) setDbCount(42 + count)
   }
 
-  // Visual dynamic numbers
   useEffect(() => {
     const interval = setInterval(() => {
       setNodeHealth(prev => Math.min(100, prev + 1))
@@ -82,7 +79,13 @@ export default function Home() {
       const pdfjsLib = await import('pdfjs-dist')
       pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
       const arrayBuffer = await file.arrayBuffer()
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+      const pdf = await loadingTask.promise
+      
+      // EXTRACTION: Text + Metadata
+      const meta = await pdf.getMetadata()
+      setFileMeta(meta.info)
+
       let fullText = ""
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)
@@ -91,7 +94,7 @@ export default function Home() {
       }
       setContent(fullText)
     } catch (err) {
-      alert("Extraction failure. File may be encrypted.")
+      alert("Extraction failure. Is this a valid PDF?")
     } finally {
       setIsParsingPdf(false)
     }
@@ -105,19 +108,14 @@ export default function Home() {
     try {
       const res = await fetch("/api/scan", {
         method: "POST",
-        body: JSON.stringify({ content, brandName })
+        body: JSON.stringify({ content, brandName, fileMeta })
       })
-      const responseText = await res.text();
-      if (!res.ok) throw new Error(responseText);
-      
-      const data = JSON.parse(responseText);
-      // Normalize SAFE to CLEAR for cooler terminology
+      const data = await res.json()
       if (data.verdict === "SAFE") data.verdict = "CLEAR";
-      
       setResult(data)
       setNodeHealth(prev => Math.max(0, prev - 20))
     } catch (e: any) {
-      alert(`Sync Error: ${e.message}`);
+      alert(`Sync Error: Critical Node Failure`);
     } finally {
       setIsScanning(false)
     }
@@ -125,7 +123,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-background relative selection:bg-primary selection:text-white">
-      {/* Immersive Hacker OS Background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#6366f108,transparent_50%)] pointer-events-none" />
       <div className="absolute inset-0 opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none" />
 
@@ -146,38 +143,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Animated Story / Trust Section (The "Truecaller" Vibe) */}
+      {/* Trust Nodes */}
       <section className="py-12 z-10 relative border-y border-border bg-card/20 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-12">
-            <TrustNode 
-              icon={<FileSearch className="w-10 h-10 text-indigo-400" />}
-              title="1. Intelligent Probe"
-              desc="Drop any suspicious email, link, or PDF. Our local-first engine parses it instantly without compromising your privacy."
-              delay={0.1}
-            />
-            <TrustNode 
-              icon={<Globe className="w-10 h-10 text-emerald-400" />}
-              title="2. Global Verification"
-              desc="We ping live RDAP registries and cross-reference our decentralized threat ledger using Gemini 2.5 Flash."
-              delay={0.3}
-            />
-            <TrustNode 
-              icon={<ShieldCheck className="w-10 h-10 text-primary" />}
-              title="3. Syndicate Protection"
-              desc="Get a cryptographic clearance card to celebrate safe offers, or a viral warning dispatch to protect your peers."
-              delay={0.5}
-            />
+          <div className="grid md:grid-cols-3 gap-12 text-center">
+            <TrustNode icon={<FileSearch className="w-10 h-10 text-indigo-400" />} title="1. Forensic Probe" desc="Identify metadata forgeries and suspicious URL patterns instantly." delay={0.1} />
+            <TrustNode icon={<Globe className="w-10 h-10 text-emerald-400" />} title="2. Global Sync" desc="Cross-referenceRDAP registries and community threat signatures." delay={0.3} />
+            <TrustNode icon={<ShieldCheck className="w-10 h-10 text-primary" />} title="3. Verified Clearance" desc="Receive cryptographic proof of legitimacy for your career leads." delay={0.5} />
           </div>
         </div>
       </section>
 
       {/* Main OS Console */}
-      <section className="pb-32 z-10">
+      <section className="pb-32 z-10 mt-12">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid lg:grid-cols-12 gap-8 items-start">
             
-            {/* LEFT: Probe Control */}
             <div className="lg:col-span-8 space-y-6">
               <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative group overflow-hidden">
                 <div className="flex justify-between items-center mb-8 pb-4 border-b border-border">
@@ -193,7 +174,7 @@ export default function Home() {
                       </div>
                     </div>
                     <button onClick={() => fileInputRef.current?.click()} className="h-10 w-10 rounded-xl bg-accent border border-border flex items-center justify-center text-muted-foreground hover:text-primary transition-all">
-                      <FileUp size={18} />
+                      {isParsingPdf ? <Loader2 size={18} className="animate-spin" /> : <FileUp size={18} />}
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf" className="hidden" />
                   </div>
@@ -201,7 +182,7 @@ export default function Home() {
 
                 <div className="space-y-4 relative">
                   <input className="w-full h-14 bg-background/80 border border-border rounded-xl px-6 font-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none text-foreground transition-all uppercase placeholder:text-muted-foreground/50" placeholder="Target_Entity_Name (e.g. Acme Corp)..." value={brandName} onChange={e => setBrandName(e.target.value)} />
-                  <textarea className="w-full h-64 bg-background/80 border border-border rounded-3xl p-8 font-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none text-foreground transition-all resize-none placeholder:text-muted-foreground/50 leading-relaxed" placeholder="DEPOSIT SUSPICIOUS PAYLOAD HERE...&#10;&#10;Accepts: Raw text, emails, or URLs.&#10;Our engine will automatically extract and ping domains against global RDAP registries." value={content} onChange={e => setContent(e.target.value)} />
+                  <textarea className="w-full h-64 bg-background/80 border border-border rounded-3xl p-8 font-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none text-foreground transition-all resize-none placeholder:text-muted-foreground/50 leading-relaxed" placeholder="DEPOSIT SUSPICIOUS PAYLOAD HERE..." value={content} onChange={e => setContent(e.target.value)} />
                   
                   <AnimatePresence>
                     {isScanning && (
@@ -218,67 +199,56 @@ export default function Home() {
                   </AnimatePresence>
                 </div>
 
-                <button onClick={runScan} disabled={isScanning || !content || nodeHealth < 10} className="mt-8 w-full h-20 text-xl font-black rounded-2xl bg-foreground text-background hover:scale-[1.02] transition-all uppercase tracking-[0.3em] flex items-center justify-center gap-4 dark:bg-white dark:text-black disabled:opacity-50 disabled:hover:scale-100 shadow-xl">
-                  {isScanning ? "Probing..." : nodeHealth < 10 ? "Node Cooling Down..." : "Synchronize Verification"}
+                <button onClick={runScan} disabled={isScanning || !content || nodeHealth < 10} className="mt-8 w-full h-20 text-xl font-black rounded-2xl bg-foreground text-background hover:scale-[1.02] transition-all uppercase tracking-[0.3em] flex items-center justify-center gap-4 dark:bg-white dark:text-black disabled:opacity-50 shadow-xl">
+                  {isScanning ? "Probing..." : nodeHealth < 10 ? "Node Cooling Down..." : "Initiate Forensic Synchrony"}
                 </button>
 
-                {/* THE MANIFEST OUTPUT */}
                 {result && (
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="mt-12 space-y-8">
-                    <div className="p-6 rounded-2xl bg-[#09090b] border border-zinc-800 font-mono text-[10px] text-zinc-400 relative overflow-hidden shadow-inner">
-                      <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-                        <p className="text-primary font-bold tracking-[0.2em]">RAW_FORENSIC_STREAM</p>
-                        <span className="text-[8px] animate-pulse text-emerald-500">UPLINK_SECURE</span>
+                    {/* Visual Forensic Data */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 font-mono text-[10px] text-zinc-500 relative overflow-hidden shadow-inner">
+                        <p className="text-primary font-bold tracking-[0.2em] mb-4 border-b border-zinc-800 pb-2">// DNS_RDAP_TELEMETRY</p>
+                        <pre className="leading-relaxed opacity-90 whitespace-pre-wrap">{result.forensic_data}</pre>
                       </div>
-                      <pre className="leading-relaxed opacity-90 whitespace-pre-wrap">{result.forensic_data}</pre>
+                      {fileMeta && (
+                        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 font-mono text-[10px] text-zinc-500 relative overflow-hidden shadow-inner">
+                          <p className="text-emerald-500 font-bold tracking-[0.2em] mb-4 border-b border-zinc-800 pb-2">// FILE_METADATA_EXTRACT</p>
+                          <div className="space-y-1">
+                            <p>PRODUCER: {fileMeta.Producer || "Unknown"}</p>
+                            <p>CREATOR: {fileMeta.Creator || "Unknown"}</p>
+                            <p>DATE: {fileMeta.CreationDate || "Unknown"}</p>
+                            <p>ENCRYPTION: NONE_DETECTION</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    <div className={cn("p-10 rounded-[2.5rem] border-2 space-y-8 relative overflow-hidden", 
-                      result.verdict === "SCAM" ? "bg-red-500/[0.02] border-red-500/30" : 
-                      result.verdict === "CLEAR" ? "bg-emerald-500/[0.02] border-emerald-500/30" : 
-                      "bg-amber-500/[0.02] border-amber-500/30"
-                    )}>
+                    <div className={cn("p-10 rounded-[3rem] border-2 space-y-8 relative overflow-hidden", result.verdict === "SCAM" ? "bg-red-500/[0.02] border-red-500/30" : result.verdict === "CLEAR" ? "bg-emerald-500/[0.02] border-emerald-500/30" : "bg-amber-500/[0.02] border-amber-500/30")}>
                       <div className="flex justify-between items-end relative z-10">
                         <div className="space-y-2">
                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Verdict_Resolution</p>
-                          <h4 className={cn("text-6xl font-black uppercase italic tracking-tighter leading-none", 
-                            result.verdict === "SCAM" ? "text-red-500" : 
-                            result.verdict === "CLEAR" ? "text-emerald-500" : 
-                            "text-amber-500"
-                          )}>
-                            {result.verdict}
-                          </h4>
+                          <h4 className={cn("text-6xl font-black uppercase italic tracking-tighter leading-none", result.verdict === "SCAM" ? "text-red-500" : result.verdict === "CLEAR" ? "text-emerald-500" : "text-amber-500")}>{result.verdict}</h4>
                         </div>
                         <div className="text-right space-y-2">
                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Node_Confidence</p>
                           <div className="text-4xl font-mono font-bold text-foreground">{result.confidence}%</div>
                         </div>
                       </div>
-                      
                       <p className="text-xl font-medium text-foreground italic leading-relaxed border-l-4 border-primary pl-8 py-2">"{result.analysis}"</p>
-                      
-                      {/* ALWAYS SHOW THE GENERATE CARD BUTTON NOW */}
-                      <DispatchCard result={result} brandName={brandName || "Unknown_Entity"} />
+                      <DispatchCard result={result} brandName={brandName || "Untrusted_Origin"} />
                     </div>
                   </motion.div>
                 )}
               </div>
             </div>
 
-            {/* RIGHT: Syndicate Pulse (The Matrix) */}
             <div className="lg:col-span-4 space-y-6">
               <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative overflow-hidden flex flex-col h-full min-h-[600px]">
-                
-                {/* Header */}
                 <div className="flex items-center justify-between border-b border-border pb-6 mb-8 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <Network className="h-5 w-5 text-primary" />
-                    <span className="text-xs font-black uppercase tracking-[0.3em] text-foreground">Grid_Status</span>
-                  </div>
+                  <div className="flex items-center gap-3"><Network className="h-5 w-5 text-primary" /><span className="text-xs font-black uppercase tracking-[0.3em] text-foreground">Grid_Status</span></div>
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                 </div>
-                
-                {/* Data Grid */}
                 <div className="grid grid-cols-2 gap-4 mb-8 shrink-0">
                   <div className="p-5 rounded-2xl bg-background border border-border flex flex-col justify-center">
                     <div className="text-3xl font-black text-foreground font-mono leading-none">{dbCount.toLocaleString()}</div>
@@ -289,38 +259,26 @@ export default function Home() {
                     <div className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-2">Active Nodes</div>
                   </div>
                 </div>
-
-                {/* Live Matrix Visualizer */}
                 <div className="flex-1 flex flex-col">
                   <div className="flex justify-between items-center px-2 mb-4">
                     <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Live_Telemetry_Stream</p>
                     <Activity className="h-3 w-3 text-primary animate-pulse" />
                   </div>
-                  
                   <div className="flex-1 relative bg-zinc-950 rounded-2xl border border-zinc-800 p-4 font-mono text-[10px] overflow-hidden">
-                    {/* Fading overlay */}
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
-                    
                     <div className="space-y-3 opacity-80">
                       {recentThreats.length > 0 ? recentThreats.map((t, i) => (
                         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} key={i} className="flex gap-3">
                           <span className="text-red-500 shrink-0">[{new Date(t.created_at).toLocaleTimeString()}]</span>
                           <span className="text-zinc-300 truncate">INTEL_RECV: {t.brand_name}</span>
                         </motion.div>
-                      )) : (
-                        <div className="text-zinc-600 animate-pulse">Awaiting incoming telemetry...</div>
-                      )}
-                      {/* Fake terminal filler for aesthetics */}
+                      )) : <div className="text-zinc-600 animate-pulse">Awaiting incoming telemetry...</div>}
                       <div className="text-zinc-700">{"\u2591\u2592\u2593 SYNCHRONIZING WITH PEER NODES..."}</div>
-                      <div className="text-zinc-700">{"\u2591\u2592\u2593 CHECKSUM VERIFIED: 0x9F8B2C"}</div>
-                      <div className="text-zinc-700">{"\u2591\u2592\u2593 MAINTAINING UPLINK..."}</div>
+                      <div className="text-zinc-700">{"\u2591\u2592\u2593 MAINTAINING SOVEREIGN UPLINK..."}</div>
                     </div>
                   </div>
                 </div>
-
-                <p className="text-[9px] text-center text-muted-foreground mt-6 font-bold uppercase tracking-[0.2em] opacity-50 shrink-0">
-                  Powered by Gemini 2.5 Flash
-                </p>
+                <p className="text-[9px] text-center text-muted-foreground mt-6 font-bold uppercase tracking-[0.2em] opacity-50 shrink-0">Powered by Gemini 2.5 Flash</p>
               </div>
             </div>
 
@@ -335,19 +293,10 @@ function cn(...inputs: any[]) { return inputs.filter(Boolean).join(" ") }
 
 function TrustNode({ icon, title, desc, delay }: any) {
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.5 }}
-      viewport={{ once: true }}
-      className="flex flex-col items-center text-center space-y-4 group p-6 rounded-3xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
-    >
-      <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl">
-        {icon}
-      </div>
+    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.5 }} viewport={{ once: true }} className="flex flex-col items-center text-center space-y-4 group p-6 rounded-3xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10">
+      <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xl">{icon}</div>
       <h3 className="text-xl font-black uppercase tracking-widest text-foreground">{title}</h3>
       <p className="text-sm text-muted-foreground font-medium leading-relaxed">{desc}</p>
     </motion.div>
   )
 }
-
