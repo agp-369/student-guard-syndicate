@@ -4,7 +4,8 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("Configuration Error: GEMINI_API_KEY is missing.");
 
-  const model = "gemini-2.0-flash"; 
+  // MIGRATED TO INDUSTRY STANDARD: Gemini 2.5 Flash
+  const model = "gemini-2.5-flash"; 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   let lastError = "";
@@ -49,5 +50,5 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
     }
   }
 
-  throw new Error(`AI Node Exhausted: ${lastError}. Please wait before scanning again.`);
+  throw new Error(`Syndicate Node Exhausted: ${lastError}.`);
 }
