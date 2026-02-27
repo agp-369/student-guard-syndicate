@@ -1,12 +1,11 @@
 export async function generateAIResponse(prompt: string, systemInstruction: string = "You are a senior cybersecurity analyst.") {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error("AI Node Critical: GEMINI_API_KEY is missing from environment.");
-    throw new Error("AI Configuration Missing (GEMINI_API_KEY).");
+    throw new Error("Configuration Error: GEMINI_API_KEY is missing.");
   }
 
-  // Using the most stable production model string to prevent 404/429 issues
-  const model = "gemini-1.5-flash-latest"; 
+  // Modern Gemini 2.0 Flash Model
+  const model = "gemini-2.0-flash"; 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const res = await fetch(url, {
@@ -37,9 +36,7 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
   const data = await res.json();
   const output = data.candidates?.[0]?.content?.parts?.[0]?.text;
   
-  if (!output) {
-    throw new Error("Analysis node returned an empty result.");
-  }
+  if (!output) throw new Error("Intelligence node returned empty candidates.");
 
   return output;
 }
