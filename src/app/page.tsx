@@ -18,10 +18,10 @@ export default function Home() {
   const [result, setResult] = useState<any>(null)
   const [recentThreats, setRecentThreats] = useState<any[]>([])
   const [totalStopped, setTotalStopped] = useState(1248)
+  const [activeProtocol, setActiveProtocol] = useState("Offer")
 
   useEffect(() => {
     fetchCommunityData()
-    // Real-time listener for community updates
     const channel = supabase.channel('threats')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
         fetchCommunityData()
@@ -61,13 +61,13 @@ export default function Home() {
         <div className="max-w-6xl mx-auto text-center z-10 relative">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.3em] mb-8 shadow-2xl">
-              <Zap className="h-3 w-3 fill-primary" /> Community Defense Node v1.1
+              <Zap className="h-3 w-3 fill-primary" /> Community Defense Node v1.2
             </div>
             <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 text-white leading-[0.85] uppercase italic">
               United against<br />Recruitment Fraud.
             </h1>
             <p className="text-lg lg:text-xl text-zinc-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium italic">
-              "StudentGuard turns individual victims into a collective defense shield."
+              "Turning individual victims into a collective defense shield."
             </p>
           </motion.div>
         </div>
@@ -81,31 +81,37 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="grid lg:grid-cols-12 gap-12">
             <div className="lg:col-span-7 space-y-8">
-              <div className="p-10 rounded-[3rem] glass-card border border-white/10 space-y-8 shadow-2xl relative overflow-hidden">
-                <div className="flex justify-between items-center">
+              <div className="p-10 rounded-[3rem] glass-card border border-white/10 space-y-10 shadow-2xl relative overflow-hidden group">
+                <div className="flex justify-between items-center relative z-10">
                   <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Lead Forensic Probe</h3>
                   <div className="flex items-center gap-2 text-emerald-500">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Sovereign Node</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Sovereign Node Active</span>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="flex gap-2 p-1 rounded-2xl bg-black/40 border border-white/5 w-fit relative z-10">
+                  <button onClick={() => setActiveProtocol("Offer")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Offer" ? "bg-primary text-white" : "text-zinc-500 hover:text-white")}>Full Offer</button>
+                  <button onClick={() => setActiveProtocol("Domain")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Domain" ? "bg-primary text-white" : "text-zinc-500 hover:text-white")}>Domain</button>
+                  <button onClick={() => setActiveProtocol("Email")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Email" ? "bg-primary text-white" : "text-zinc-500 hover:text-white")}>Email</button>
+                </div>
+
+                <div className="space-y-4 relative z-10">
                   <input 
-                    className="w-full h-14 bg-black/40 border-2 border-white/5 rounded-xl px-6 text-sm font-bold focus:border-primary/50 outline-none text-white"
-                    placeholder="Company Name (optional)..."
+                    className="w-full h-14 bg-black/40 border-2 border-white/5 rounded-xl px-6 text-sm font-bold focus:border-primary/50 outline-none text-white transition-all"
+                    placeholder={activeProtocol === "Offer" ? "Company Name (optional)..." : activeProtocol === "Domain" ? "Website URL (e.g. recruit-jobs.net)" : "Recruiter Email Address..."}
                     value={brandName}
                     onChange={e => setBrandName(e.target.value)}
                   />
                   <textarea 
-                    className="w-full h-48 bg-black/40 border-2 border-white/5 rounded-[2rem] p-6 text-sm font-medium focus:border-primary/50 outline-none text-white"
-                    placeholder="Paste job text or mysterious email body here..."
+                    className="w-full h-48 bg-black/40 border-2 border-white/5 rounded-[2rem] p-6 text-sm font-medium focus:border-primary/50 outline-none text-white transition-all"
+                    placeholder={activeProtocol === "Offer" ? "Paste job text or mysterious email body here..." : activeProtocol === "Domain" ? "Provide any context about where you found this link..." : "Paste the message content you received from this email..."}
                     value={content}
                     onChange={e => setContent(e.target.value)}
                   />
                 </div>
 
-                <button onClick={runScan} disabled={isScanning || !content} className="w-full h-16 text-xl font-black rounded-3xl bg-primary text-white hover:scale-[1.02] transition-all uppercase italic tracking-tighter flex items-center justify-center gap-3">
+                <button onClick={runScan} disabled={isScanning || !content} className="w-full h-16 text-xl font-black rounded-3xl bg-primary text-white hover:scale-[1.02] transition-all uppercase italic tracking-tighter flex items-center justify-center gap-3 shadow-xl shadow-primary/20">
                   {isScanning ? <Loader2 className="animate-spin h-6 w-6" /> : <><FileSearch className="h-6 w-6" /> Run Community Scan</>}
                 </button>
 
@@ -113,7 +119,10 @@ export default function Home() {
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn("p-8 rounded-[2rem] border-2 space-y-6", 
                     result.verdict === "SCAM" ? "bg-red-500/10 border-red-500/20" : "bg-emerald-500/10 border-emerald-500/20"
                   )}>
-                    <h4 className="text-xl font-black uppercase italic tracking-widest">Verdict: {result.verdict}</h4>
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-xl font-black uppercase italic tracking-widest">Verdict: {result.verdict}</h4>
+                      <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-black">{result.confidence}%</div>
+                    </div>
                     <p className="text-sm text-zinc-300 italic leading-relaxed">"{result.analysis}"</p>
                     {result.verdict === "SCAM" && <ScamAlertCard result={result} brandName={brandName || "Unknown Node"} />}
                   </motion.div>
