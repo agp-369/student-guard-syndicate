@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ShieldCheck, LayoutGrid, Activity, BookOpen, Globe, Code } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ThreatTicker } from "@/components/threat-ticker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -53,7 +54,9 @@ export default function RootLayout({
             </div>
           </header>
 
-          <main className="min-h-screen">
+          <ThreatTicker />
+
+          <main className="min-h-screen pt-8">
             {children}
           </main>
 
@@ -69,7 +72,7 @@ export default function RootLayout({
                 </p>
               </div>
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Infrastructure</h4>
+                <h4 className="text-[10px] font-black uppercase text-white tracking-[0.3em]">Infrastructure</h4>
                 <ul className="text-xs text-muted-foreground space-y-2 font-bold uppercase tracking-widest">
                   <li><Link href="/" className="hover:text-primary transition-colors">Forensic Scan</Link></li>
                   <li><Link href="/threats" className="hover:text-primary transition-colors">Threat Board</Link></li>
@@ -77,14 +80,14 @@ export default function RootLayout({
                 </ul>
               </div>
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Governance</h4>
+                <h4 className="text-[10px] font-black uppercase text-white tracking-[0.3em]">Governance</h4>
                 <ul className="text-xs text-muted-foreground space-y-2 font-bold uppercase tracking-widest">
                   <li><Link href="/manifesto" className="hover:text-primary transition-colors">Manifesto</Link></li>
                   <li><Link href="/sovereignty" className="hover:text-primary transition-colors">Privacy Node</Link></li>
                 </ul>
               </div>
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Node Status</h4>
+                <h4 className="text-[10px] font-black uppercase text-white tracking-[0.3em]">Node Status</h4>
                 <div className="p-4 rounded-2xl bg-accent/50 border border-border space-y-2">
                   <div className="flex justify-between items-center text-[10px] font-black">
                     <span className="text-muted-foreground uppercase tracking-widest">System</span>
