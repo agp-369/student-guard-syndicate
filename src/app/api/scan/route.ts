@@ -8,15 +8,31 @@ export async function POST(req: Request) {
     if (!content) return new NextResponse("Payload missing", { status: 400 });
 
     const systemInstruction = `
-      You are 'StudentGuard Core', an autonomous analyst.
-      TASK: Analyze content for recruitment fraud.
-      OUTPUT: Return ONLY valid JSON with: verdict, confidence, red_flags, analysis, recommendation, category.
+      You are 'StudentGuard Core', a Senior Cybersecurity Analyst.
+      TASK: Analyze the provided content for student recruitment fraud.
+      
+      OUTPUT FORMAT: Return a valid JSON object.
+      {
+        "verdict": "SAFE" | "CAUTION" | "SCAM",
+        "confidence": number (0-100),
+        "red_flags": ["Reason 1", "Reason 2"],
+        "analysis": "Short reasoning",
+        "recommendation": "What to do",
+        "category": "Fraud Category"
+      }
     `;
 
     const response = await generateAIResponse(content, systemInstruction);
-    const result = JSON.parse(response || "{}");
+    let result;
+    
+    try {
+      result = JSON.parse(response || "{}");
+    } catch (parseErr) {
+      console.error("AI Output Parse Error:", response);
+      throw new Error("Malformed analysis received.");
+    }
 
-    // 🛡️ Initialize Supabase inside the function to prevent build errors
+    // 🛡️ SYNDICATE LOGIC: Save to community if SCAM
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -30,8 +46,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(result);
-  } catch (error) {
-    console.error("Scan Error:", error);
-    return new NextResponse("Analysis Node Failure", { status: 500 });
+  } catch (error: any) {
+    console.error("Scan API Operational Failure:", error);
+    return new NextResponse(error.message || "Internal Node Failure", { status: 500 });
   }
 }
