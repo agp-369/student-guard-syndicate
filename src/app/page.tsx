@@ -5,10 +5,6 @@ import { ShieldCheck, Zap, Activity, Users, AlertTriangle, FileSearch, Loader2, 
 import { motion, AnimatePresence } from "framer-motion"
 import { ScamAlertCard } from "@/components/scam-alert-card"
 import { createClient } from "@supabase/supabase-js"
-import * as pdfjsLib from 'pdfjs-dist'
-
-// Worker setup for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 
 const getSupabase = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -71,6 +67,10 @@ export default function Home() {
     
     setIsParsingPdf(true)
     try {
+      // Dynamic import to avoid SSR issues with DOMMatrix
+      const pdfjsLib = await import('pdfjs-dist')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+      
       const arrayBuffer = await file.arrayBuffer()
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
       let fullText = ""
@@ -81,6 +81,7 @@ export default function Home() {
       }
       setContent(fullText)
     } catch (err) {
+      console.error("PDF Parse Error:", err);
       alert("Sovereign Node: PDF extraction failed. Please paste text manually.")
     } finally {
       setIsParsingPdf(false)
@@ -204,7 +205,7 @@ export default function Home() {
                         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} key={i} className="p-4 rounded-xl bg-background border border-border group overflow-hidden relative">
                           <div className="absolute left-0 top-0 w-1 h-full bg-red-500 group-hover:w-full transition-all duration-500 opacity-10" />
                           <div className="flex justify-between items-start relative z-10">
-                            <div><p className="text-xs font-bold text-foreground truncate max-w-[120px]">{t.brand_name}</p><p className="text-[9px] font-mono text-muted-foreground truncate max-w-[120px]">{t.domain}</p></div>
+                            <div><p className="text-xs font-bold text-foreground truncate max-w-[140px]">{t.brand_name}</p><p className="text-[9px] font-mono text-muted-foreground truncate max-w-[140px]">{t.domain}</p></div>
                             <span className="text-[8px] font-black bg-red-500/10 text-red-500 px-2 py-1 rounded border border-red-500/20 uppercase tracking-widest">{t.category}</span>
                           </div>
                         </motion.div>
