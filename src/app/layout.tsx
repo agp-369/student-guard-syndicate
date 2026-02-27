@@ -19,7 +19,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        {/* TACTICAL HEADER */}
         <header className="fixed top-0 left-0 w-full z-[100] bg-zinc-950/80 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
@@ -32,21 +31,20 @@ export default function RootLayout({
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
-              <NavLink href="#" label="Pulse" icon={<Activity className="h-3 w-3" />} />
-              <NavLink href="#" label="Threats" icon={<LayoutGrid className="h-3 w-3" />} />
-              <NavLink href="#" label="Sovereignty" icon={<BookOpen className="h-3 w-3" />} />
+              <NavLink href="/" label="Pulse" icon={<Activity className="h-3 w-3" />} />
+              <NavLink href="/manifesto" label="Manifesto" icon={<LayoutGrid className="h-3 w-3" />} />
+              <NavLink href="/sovereignty" label="Sovereignty" icon={<BookOpen className="h-3 w-3" />} />
             </nav>
 
             <div className="flex items-center gap-4">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Syndicate Live</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 underline decoration-emerald-500/50 underline-offset-4">Collective Active</span>
             </div>
           </div>
         </header>
 
         {children}
 
-        {/* COMMUNITY FOOTER */}
         <footer className="py-20 border-t border-white/5 bg-zinc-950">
           <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
             <div className="space-y-6">
@@ -54,24 +52,16 @@ export default function RootLayout({
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <span className="font-black text-lg uppercase italic text-white">StudentGuard Syndicate</span>
               </div>
-              <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+              <p className="text-xs text-zinc-500 leading-relaxed font-medium italic">
                 The sovereign standard for community security. Engineered for the student population.
               </p>
             </div>
             <div className="space-y-4">
               <h4 className="text-[10px] font-black uppercase text-white tracking-[0.3em]">Protocols</h4>
               <ul className="text-xs text-zinc-500 space-y-2 font-bold uppercase tracking-widest">
-                <li className="hover:text-primary transition-colors cursor-pointer">Forensic Scan</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Threat Feed</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Syndicate API</li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase text-white tracking-[0.3em]">Governance</h4>
-              <ul className="text-xs text-zinc-500 space-y-2 font-bold uppercase tracking-widest">
-                <li className="hover:text-primary transition-colors cursor-pointer">Sovereignty</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Privacy Node</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Manifesto</li>
+                <li><Link href="/" className="hover:text-primary transition-colors">Forensic Scan</Link></li>
+                <li><Link href="/manifesto" className="hover:text-primary transition-colors">The Manifesto</Link></li>
+                <li><Link href="/sovereignty" className="hover:text-primary transition-colors">Privacy Node</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
@@ -79,11 +69,11 @@ export default function RootLayout({
               <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-black">
                   <span className="text-zinc-500">SYSTEM</span>
-                  <span className="text-emerald-500 uppercase">Nominal</span>
+                  <span className="text-emerald-500 uppercase italic">Nominal</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-black">
-                  <span className="text-zinc-500">ENCRYPTION</span>
-                  <span className="text-primary uppercase">AES-256</span>
+                  <span className="text-zinc-500">UPLINK</span>
+                  <span className="text-primary uppercase italic">Active</span>
                 </div>
               </div>
             </div>
