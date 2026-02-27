@@ -207,9 +207,14 @@ export default function Home() {
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="mt-12 space-y-8">
                     {/* Visual Forensic Data */}
                     <div className="grid md:grid-cols-2 gap-6">
-                      <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 font-mono text-[10px] text-zinc-500 relative overflow-hidden shadow-inner">
-                        <p className="text-primary font-bold tracking-[0.2em] mb-4 border-b border-zinc-800 pb-2">// DNS_RDAP_TELEMETRY</p>
+                      <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 font-mono text-[10px] text-zinc-500 relative overflow-hidden shadow-inner group">
+                        <p className="text-primary font-bold tracking-[0.2em] mb-4 border-b border-zinc-800 pb-2 flex items-center justify-between">
+                          // DNS_RDAP_TELEMETRY
+                          <span className="text-primary animate-pulse opacity-0 group-hover:opacity-100 transition-opacity">ANALYSIS_ACTIVE</span>
+                        </p>
                         <pre className="leading-relaxed opacity-90 whitespace-pre-wrap">{result.forensic_data}</pre>
+                        {/* Heatmap Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                       </div>
                       {fileMeta && (
                         <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 font-mono text-[10px] text-zinc-500 relative overflow-hidden shadow-inner">
