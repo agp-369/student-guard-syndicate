@@ -1,4 +1,4 @@
-const sleep = (ms: number) => new Promise(res => setTimeout(ms, res));
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function generateAIResponse(prompt: string, systemInstruction: string = "You are a senior cybersecurity analyst.") {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -9,7 +9,6 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
 
   let lastError = "";
   
-  // RETRY PROTOCOL: 3 Attempts with Exponential Backoff
   for (let i = 0; i < 3; i++) {
     try {
       const res = await fetch(url, {
@@ -28,7 +27,6 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
       });
 
       if (res.status === 429) {
-        console.warn(`AI Node Congested (Attempt ${i + 1}/3). Retrying in ${2 * (i + 1)}s...`);
         await sleep(2000 * (i + 1));
         continue;
       }
@@ -46,10 +44,10 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
 
     } catch (err: any) {
       lastError = err.message;
-      if (i === 2) break; // Final attempt failed
+      if (i === 2) break; 
       await sleep(1000);
     }
   }
 
-  throw new Error(`AI Node Exhausted: ${lastError}. Please wait 60 seconds before scanning again.`);
+  throw new Error(`AI Node Exhausted: ${lastError}. Please wait before scanning again.`);
 }
