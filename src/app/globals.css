@@ -5,21 +5,38 @@
   --color-foreground: var(--foreground);
   --color-primary: #6366f1;
   --color-primary-foreground: #ffffff;
-  --color-zinc-950: #09090b;
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 }
 
 :root {
   --background: #ffffff;
   --foreground: #09090b;
-  --primary: #6366f1;
+  --card: #f8fafc;
+  --card-foreground: #09090b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
   --border: #e2e8f0;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --primary: #6366f1;
 }
 
 .dark {
   --background: #09090b;
   --foreground: #fafafa;
-  --primary: #6366f1;
+  --card: #111113;
+  --card-foreground: #fafafa;
+  --accent: #1e1e21;
+  --accent-foreground: #fafafa;
   --border: #27272a;
+  --muted: #1e1e21;
+  --muted-foreground: #a1a1aa;
 }
 
 body {
@@ -29,39 +46,6 @@ body {
 }
 
 .glass-card {
-  background: rgba(var(--primary-rgb), 0.03);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-}
-
-.dark .glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.tactical-border {
-  border: 1px solid var(--border);
-  position: relative;
-}
-
-.tactical-border::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  width: 10px;
-  height: 10px;
-  border-top: 2px solid var(--primary);
-  border-left: 2px solid var(--primary);
-}
-
-.tactical-border::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 10px;
-  height: 10px;
-  border-bottom: 2px solid var(--primary);
-  border-right: 2px solid var(--primary);
 }

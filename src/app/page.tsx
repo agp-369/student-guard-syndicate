@@ -6,7 +6,6 @@ import { motion } from "framer-motion"
 import { ScamAlertCard } from "@/components/scam-alert-card"
 import { createClient } from "@supabase/supabase-js"
 
-// Lazy initialization helper
 const getSupabase = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -26,14 +25,8 @@ export default function Home() {
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) return;
-
     fetchCommunityData(supabase)
-    
-    const channel = supabase.channel('threats')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
-        fetchCommunityData(supabase)
-      }).subscribe()
-      
+    const channel = supabase.channel('threats').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => { fetchCommunityData(supabase) }).subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
 
@@ -53,28 +46,28 @@ export default function Home() {
         method: "POST",
         body: JSON.stringify({ content, brandName })
       })
+      if (!res.ok) throw new Error("API Node Rejected Connection")
       const data = await res.json()
       setResult(data)
     } catch (e) {
-      alert("Node sync failure.")
+      alert("Node sync failure. Check your internet or API credentials.")
     } finally {
       setIsScanning(false)
     }
   }
 
   return (
-    <div className="flex flex-col w-full min-h-screen">
-      {/* 1. HERO SECTION */}
+    <div className="flex flex-col w-full min-h-screen bg-background">
       <section className="relative pt-32 pb-20 px-6 overflow-hidden">
         <div className="max-w-6xl mx-auto text-center z-10 relative">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.3em] mb-8 shadow-2xl">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.3em] mb-8">
               <Zap className="h-3 w-3 fill-primary" /> Community Defense Node v1.2
             </div>
-            <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 text-white leading-[0.85] uppercase italic">
+            <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 text-foreground leading-[0.85] uppercase italic">
               United against<br />Recruitment Fraud.
             </h1>
-            <p className="text-lg lg:text-xl text-zinc-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium italic">
+            <p className="text-lg lg:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto italic">
               "Turning individual victims into a collective defense shield."
             </p>
           </motion.div>
@@ -84,54 +77,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. SCANNER & PULSE */}
-      <section className="py-20 bg-zinc-950/50 border-y border-white/5 relative">
+      <section className="py-20 bg-accent/30 border-y border-border relative">
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="grid lg:grid-cols-12 gap-12">
             <div className="lg:col-span-7 space-y-8">
-              <div className="p-10 rounded-[3rem] glass-card border border-white/10 space-y-10 shadow-2xl relative overflow-hidden group">
+              <div className="p-10 rounded-[3rem] bg-card border border-border space-y-10 shadow-xl relative overflow-hidden group">
                 <div className="flex justify-between items-center relative z-10">
-                  <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Lead Forensic Probe</h3>
+                  <h3 className="text-2xl font-black text-foreground uppercase italic tracking-tight">Lead Forensic Probe</h3>
                   <div className="flex items-center gap-2 text-emerald-500">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Sovereign Node Active</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Node Active</span>
                   </div>
                 </div>
 
-                <div className="flex gap-2 p-1 rounded-2xl bg-black/40 border border-white/5 w-fit relative z-10">
-                  <button onClick={() => setActiveProtocol("Offer")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Offer" ? "bg-primary text-white" : "text-zinc-500 hover:text-white")}>Full Offer</button>
-                  <button onClick={() => setActiveProtocol("Domain")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Domain" ? "bg-primary text-white" : "text-zinc-500 hover:text-white")}>Domain</button>
-                  <button onClick={() => setActiveProtocol("Email")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Email" ? "bg-primary text-white" : "text-zinc-500 hover:text-white")}>Email</button>
+                <div className="flex gap-2 p-1 rounded-2xl bg-accent border border-border w-fit relative z-10">
+                  <button onClick={() => setActiveProtocol("Offer")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Offer" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}>Full Offer</button>
+                  <button onClick={() => setActiveProtocol("Domain")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Domain" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}>Domain</button>
+                  <button onClick={() => setActiveProtocol("Email")} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", activeProtocol === "Email" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}>Email</button>
                 </div>
 
                 <div className="space-y-4 relative z-10">
-                  <input 
-                    className="w-full h-14 bg-black/40 border-2 border-white/5 rounded-xl px-6 text-sm font-bold focus:border-primary/50 outline-none text-white transition-all"
-                    placeholder={activeProtocol === "Offer" ? "Company Name (optional)..." : activeProtocol === "Domain" ? "Website URL (e.g. recruit-jobs.net)" : "Recruiter Email Address..."}
-                    value={brandName}
-                    onChange={e => setBrandName(e.target.value)}
-                  />
-                  <textarea 
-                    className="w-full h-48 bg-black/40 border-2 border-white/5 rounded-[2rem] p-6 text-sm font-medium focus:border-primary/50 outline-none text-white transition-all"
-                    placeholder={activeProtocol === "Offer" ? "Paste job text or mysterious email body here..." : activeProtocol === "Domain" ? "Provide any context about where you found this link..." : "Paste the message content you received from this email..."}
-                    value={content}
-                    onChange={e => setContent(e.target.value)}
-                  />
+                  <input className="w-full h-14 bg-accent/50 border-2 border-border rounded-xl px-6 text-sm font-bold focus:border-primary outline-none text-foreground" placeholder={activeProtocol === "Offer" ? "Company Name..." : activeProtocol === "Domain" ? "Website URL..." : "Recruiter Email..."} value={brandName} onChange={e => setBrandName(e.target.value)} />
+                  <textarea className="w-full h-48 bg-accent/50 border-2 border-border rounded-[2rem] p-6 text-sm font-medium focus:border-primary outline-none text-foreground" placeholder="Paste job text or mysterious content here..." value={content} onChange={e => setContent(e.target.value)} />
                 </div>
 
-                <button onClick={runScan} disabled={isScanning || !content} className="w-full h-16 text-xl font-black rounded-3xl bg-primary text-white hover:scale-[1.02] transition-all uppercase italic tracking-tighter flex items-center justify-center gap-3 shadow-xl shadow-primary/20">
+                <button onClick={runScan} disabled={isScanning || !content} className="w-full h-16 text-xl font-black rounded-3xl bg-primary text-primary-foreground hover:scale-[1.02] transition-all uppercase italic tracking-tighter flex items-center justify-center gap-3">
                   {isScanning ? <Loader2 className="animate-spin h-6 w-6" /> : <><FileSearch className="h-6 w-6" /> Run Community Scan</>}
                 </button>
 
                 {result && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn("p-8 rounded-[2rem] border-2 space-y-6", 
-                    result.verdict === "SCAM" ? "bg-red-500/10 border-red-500/20" : "bg-emerald-500/10 border-emerald-500/20"
-                  )}>
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-xl font-black uppercase italic tracking-widest">Verdict: {result.verdict}</h4>
-                      <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-black">{result.confidence}%</div>
-                    </div>
-                    <p className="text-sm font-medium text-zinc-300 italic leading-relaxed">"{result.analysis}"</p>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn("p-8 rounded-[2rem] border-2 space-y-6", result.verdict === "SCAM" ? "bg-red-500/10 border-red-500/20" : "bg-emerald-500/10 border-emerald-500/20")}>
+                    <h4 className="text-xl font-black uppercase italic tracking-widest">Verdict: {result.verdict}</h4>
+                    <p className="text-sm font-medium text-foreground italic leading-relaxed">"{result.analysis}"</p>
                     {result.verdict === "SCAM" && <ScamAlertCard result={result} brandName={brandName || "Unknown Node"} />}
                   </motion.div>
                 )}
@@ -139,21 +116,21 @@ export default function Home() {
             </div>
 
             <div className="lg:col-span-5 space-y-6">
-              <div className="p-8 rounded-[2.5rem] bg-black border-2 border-white/5 space-y-8 shadow-2xl">
-                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-                  <div className="flex items-center gap-3"><Activity className="h-4 w-4 text-primary" /><span className="text-xs font-black uppercase text-white tracking-widest">Community Pulse</span></div>
-                  <Users className="h-4 w-4 text-zinc-600" />
+              <div className="p-8 rounded-[2.5rem] bg-card border-2 border-border space-y-8 shadow-xl">
+                <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+                  <div className="flex items-center gap-3 text-primary"><Activity className="h-4 w-4" /><span className="text-xs font-black uppercase text-foreground">Community Pulse</span></div>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-1"><div className="text-3xl font-black text-white">{totalStopped}</div><div className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.2em]">Threats Stopped</div></div>
-                  <div className="space-y-1"><div className="text-3xl font-black text-emerald-500">99.8%</div><div className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.2em]">Defense Rating</div></div>
+                  <div className="space-y-1"><div className="text-3xl font-black text-foreground">{totalStopped}</div><div className="text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">Threats Stopped</div></div>
+                  <div className="space-y-1"><div className="text-3xl font-black text-emerald-500">99.8%</div><div className="text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">Defense Rating</div></div>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Live Neutralizations</h4>
+                  <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Live Neutralizations</h4>
                   <div className="space-y-2">
                     {recentThreats.map((t, i) => (
-                      <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5 animate-in slide-in-from-top-2">
-                        <span className="text-[10px] font-bold text-zinc-300 font-mono truncate max-w-[150px]">{t.brand_name}</span>
+                      <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-accent border border-border">
+                        <span className="text-[10px] font-bold text-foreground font-mono truncate max-w-[150px]">{t.brand_name}</span>
                         <span className="text-[8px] font-black text-red-500 uppercase tracking-widest">{t.category}</span>
                       </div>
                     ))}

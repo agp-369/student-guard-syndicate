@@ -5,7 +5,7 @@ export default function Sovereignty() {
     <div className="max-w-4xl mx-auto px-6 py-32 space-y-16">
       <header className="space-y-4">
         <h1 className="text-6xl font-black italic tracking-tighter uppercase text-emerald-500">Sovereign Standard.</h1>
-        <p className="text-2xl text-zinc-400 italic">"Engineering privacy into the foundation of community defense."</p>
+        <p className="text-2xl text-muted-foreground italic">"Engineering privacy into the foundation of community defense."</p>
       </header>
 
       <section className="grid md:grid-cols-2 gap-12">
@@ -25,7 +25,7 @@ export default function Sovereignty() {
         <p>{">"} INITIALIZING SECURITY_HANDSHAKE...</p>
         <p>{">"} ANONYMIZING_USER_PAYLOAD: COMPLETE.</p>
         <p>{">"} UPLINKING_THREAT_PATTERN: SUCCESS.</p>
-        <p className="font-bold text-white text-xs">{">"} STATUS: SOVEREIGN INTEGRITY VERIFIED.</p>
+        <p className="font-bold text-foreground text-xs">{">"} STATUS: SOVEREIGN INTEGRITY VERIFIED.</p>
       </div>
     </div>
   )
@@ -34,9 +34,9 @@ export default function Sovereignty() {
 function TechNode({ icon, title, desc }: any) {
   return (
     <div className="space-y-6">
-      <div className="h-14 w-14 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center shadow-lg">{icon}</div>
-      <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">{title}</h3>
-      <p className="text-sm text-zinc-500 font-medium leading-relaxed italic">{desc}</p>
+      <div className="h-14 w-14 rounded-2xl bg-card border border-border flex items-center justify-center shadow-lg">{icon}</div>
+      <h3 className="text-2xl font-black text-foreground uppercase italic tracking-tight">{title}</h3>
+      <p className="text-sm text-muted-foreground font-medium leading-relaxed italic">{desc}</p>
     </div>
   )
 }

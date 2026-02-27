@@ -9,40 +9,29 @@ export async function POST(req: Request) {
 
     const systemInstruction = `
       You are 'StudentGuard Core', a Senior Cybersecurity Analyst.
-      TASK: Analyze the provided content for student recruitment fraud.
-      
-      OUTPUT FORMAT: Return a valid JSON object.
-      {
-        "verdict": "SAFE" | "CAUTION" | "SCAM",
-        "confidence": number (0-100),
-        "red_flags": ["Reason 1", "Reason 2"],
-        "analysis": "Short reasoning",
-        "recommendation": "What to do",
-        "category": "Fraud Category"
-      }
+      TASK: Analyze the provided content for recruitment fraud.
+      OUTPUT: Return valid JSON with verdict, confidence, red_flags, analysis, recommendation, category.
     `;
 
     const response = await generateAIResponse(content, systemInstruction);
-    let result;
-    
+    let result = JSON.parse(response || "{}");
+
+    // 🛡️ SYNDICATE LOGIC: Attempt community share but don't fail the scan if it fails
     try {
-      result = JSON.parse(response || "{}");
-    } catch (parseErr) {
-      console.error("AI Output Parse Error:", response);
-      throw new Error("Malformed analysis received.");
-    }
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    // 🛡️ SYNDICATE LOGIC: Save to community if SCAM
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (supabaseUrl && supabaseKey && result.verdict === "SCAM") {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      await supabase.from('community_threats').insert({
-        brand_name: brandName || "Unknown Entity",
-        domain: content.match(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g)?.[0] || "Undisclosed Node",
-        category: result.category || "General Fraud"
-      });
+      if (supabaseUrl && supabaseKey && result.verdict === "SCAM") {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { error } = await supabase.from('community_threats').insert({
+          brand_name: brandName || "Unknown Entity",
+          domain: content.match(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g)?.[0] || "Undisclosed Node",
+          category: result.category || "General Fraud"
+        });
+        if (error) console.error("Supabase Share Error:", error.message);
+      }
+    } catch (syncErr) {
+      console.warn("Community sync node offline:", syncErr);
     }
 
     return NextResponse.json(result);
