@@ -46,11 +46,17 @@ export default function Home() {
         method: "POST",
         body: JSON.stringify({ content, brandName })
       })
-      if (!res.ok) throw new Error("API Node Rejected Connection")
+      
+      if (!res.ok) {
+        const errorDetail = await res.text();
+        throw new Error(errorDetail || `HTTP ${res.status}`);
+      }
+      
       const data = await res.json()
       setResult(data)
-    } catch (e) {
-      alert("Node sync failure. Check your internet or API credentials.")
+    } catch (e: any) {
+      console.error("Scan Node Failure:", e);
+      alert(`Node sync failure: ${e.message}`);
     } finally {
       setIsScanning(false)
     }

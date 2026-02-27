@@ -5,38 +5,46 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(req: Request) {
   try {
     const { content, brandName } = await req.json();
-    if (!content) return new NextResponse("Payload missing", { status: 400 });
+    if (!content) return new NextResponse("Scanning Payload Missing", { status: 400 });
 
     const systemInstruction = `
       You are 'StudentGuard Core', a Senior Cybersecurity Analyst.
       TASK: Analyze the provided content for recruitment fraud.
-      OUTPUT: Return valid JSON with verdict, confidence, red_flags, analysis, recommendation, category.
+      OUTPUT: Return ONLY valid JSON with: verdict, confidence, red_flags, analysis, recommendation, category.
     `;
 
     const response = await generateAIResponse(content, systemInstruction);
-    let result = JSON.parse(response || "{}");
+    
+    let result;
+    try {
+      // Clean the response in case the AI includes markdown backticks
+      const cleanJson = response.replace(/```json/g, "").replace(/```/g, "").trim();
+      result = JSON.parse(cleanJson);
+    } catch (parseErr) {
+      console.error("AI Node Output Error:", response);
+      return new NextResponse("Intelligence Node produced malformed data.", { status: 500 });
+    }
 
-    // 🛡️ SYNDICATE LOGIC: Attempt community share but don't fail the scan if it fails
+    // 🛡️ SYNDICATE LOGIC: Attempt community share
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
       if (supabaseUrl && supabaseKey && result.verdict === "SCAM") {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const { error } = await supabase.from('community_threats').insert({
+        await supabase.from('community_threats').insert({
           brand_name: brandName || "Unknown Entity",
           domain: content.match(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g)?.[0] || "Undisclosed Node",
           category: result.category || "General Fraud"
         });
-        if (error) console.error("Supabase Share Error:", error.message);
       }
     } catch (syncErr) {
-      console.warn("Community sync node offline:", syncErr);
+      console.warn("Community sync node bypassed:", syncErr);
     }
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error("Scan API Operational Failure:", error);
+    console.error("Critical Node Failure:", error.message);
     return new NextResponse(error.message || "Internal Node Failure", { status: 500 });
   }
 }

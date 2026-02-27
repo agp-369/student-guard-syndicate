@@ -2,11 +2,11 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error("AI Node Critical: GEMINI_API_KEY is missing from environment.");
-    throw new Error("API configuration missing.");
+    throw new Error("AI Configuration Missing (GEMINI_API_KEY).");
   }
 
-  // Use the latest stable preview model
-  const model = "gemini-2.0-flash-exp"; 
+  // Using the most stable production model string to prevent 404/429 issues
+  const model = "gemini-1.5-flash-latest"; 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const res = await fetch(url, {
@@ -20,7 +20,7 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
         parts: [{ text: prompt }] 
       }],
       generation_config: {
-        temperature: 0.1, // Lower temperature for more factual analysis
+        temperature: 0.1,
         top_p: 0.95,
         max_output_tokens: 2048,
         response_mime_type: "application/json"
@@ -31,15 +31,14 @@ export async function generateAIResponse(prompt: string, systemInstruction: stri
   if (!res.ok) {
     const errText = await res.text();
     console.error(`AI Node Failure [${res.status}]:`, errText);
-    throw new Error(`Analysis node rejected request (${res.status}).`);
+    throw new Error(`AI Node Rejected Connection (${res.status}).`);
   }
 
   const data = await res.json();
   const output = data.candidates?.[0]?.content?.parts?.[0]?.text;
   
   if (!output) {
-    console.error("AI Node Error: Empty response candidates.");
-    throw new Error("No analysis generated.");
+    throw new Error("Analysis node returned an empty result.");
   }
 
   return output;
