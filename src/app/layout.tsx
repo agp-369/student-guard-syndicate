@@ -28,13 +28,16 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
             <header className="fixed top-0 left-0 w-full z-[100] bg-background/60 backdrop-blur-3xl border-b border-border">
               <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+                {/* BRANDING: Now fully visible on mobile */}
                 <Link href="/" className="flex items-center gap-3 md:gap-4 group shrink-0">
-                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg">
-                    <ShieldAlert className="h-6 w-6 md:h-7 md:w-7" />
+                  <div className="h-9 w-9 md:h-12 md:w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg">
+                    <ShieldAlert className="h-5 w-5 md:h-7 md:w-7" />
                   </div>
-                  <div className="hidden sm:block">
-                    <span className="font-black text-xl md:text-2xl tracking-tighter uppercase italic block leading-none text-foreground">Student<span className="text-primary">Guard.</span></span>
-                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-[0.4em]">Syndicate Node</span>
+                  <div className="flex flex-col">
+                    <span className="font-black text-lg md:text-2xl tracking-tighter uppercase italic block leading-none text-foreground">
+                      Student<span className="text-primary">Guard.</span>
+                    </span>
+                    <span className="text-[7px] md:text-[8px] font-black text-muted-foreground uppercase tracking-[0.4em] mt-0.5">Syndicate Node</span>
                   </div>
                 </Link>
 
@@ -61,9 +64,9 @@ export default function RootLayout({
                   <SignedIn>
                     <UserButton appearance={{ elements: { userButtonAvatarBox: "h-9 w-9 md:h-10 md:w-10 rounded-xl" } }} />
                   </SignedIn>
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse hidden xs:block" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground hidden md:block">Grid_Online</span>
+                  <div className="hidden md:flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Grid_Online</span>
                   </div>
                   <button onClick={() => setIsMenuOpen(true)} className="lg:hidden h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
                     <Menu size={24} />
@@ -79,9 +82,9 @@ export default function RootLayout({
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMenuOpen(false)} className="fixed inset-0 bg-background/80 backdrop-blur-md z-[110] lg:hidden" />
                   <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="fixed top-0 right-0 h-full w-[280px] bg-card border-l border-border z-[120] p-8 lg:hidden shadow-2xl">
                     <div className="flex justify-between items-center mb-12">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <ShieldAlert className="text-primary h-5 w-5" />
-                        <span className="font-black text-sm uppercase italic">Menu</span>
+                        <span className="font-black text-sm uppercase italic">Syndicate Menu</span>
                       </div>
                       <button onClick={() => setIsMenuOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-accent text-muted-foreground"><X size={20} /></button>
                     </div>
