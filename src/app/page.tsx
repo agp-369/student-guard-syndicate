@@ -90,7 +90,7 @@ export default function Home() {
         fullText += textContent.items.map((item: any) => item.str).join(" ")
       }
       setContent(fullText)
-    } catch (err) { alert("Sovereign Node: Extraction Failure.") } finally { setIsParsingPdf(false) }
+    } catch (err) { alert("Extraction Failure.") } finally { setIsParsingPdf(false) }
   }
 
   const runScan = async () => {
@@ -101,33 +101,41 @@ export default function Home() {
       const data = await res.json()
       setResult(data)
       setNodeHealth(prev => Math.max(0, prev - 20))
-    } catch (e: any) { alert(`Sync Error: Node Offline`); } finally { setIsScanning(false) }
+    } catch (e: any) { alert(`Sync Error`); } finally { setIsScanning(false) }
   }
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-background relative selection:bg-primary selection:text-white">
-      {/* Immersive Background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#6366f108,transparent_50%)] pointer-events-none" />
       
-      {/* Hero Section */}
-      <header className="relative pt-32 md:pt-48 pb-16 px-6 z-10 text-center">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.4em] shadow-[0_0_40px_rgba(99,102,241,0.1)]">
+      {/* Hero Section - Mobile Centered */}
+      <header className="relative pt-32 md:pt-48 pb-16 px-6 z-10 text-center flex flex-col items-center">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-4xl">
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.4em] shadow-[0_0_40px_rgba(99,102,241,0.1)] mx-auto">
             <Radio size={14} className="animate-pulse" /> Syndicate OS Activated
           </div>
-          <h1 className="text-5xl md:text-8xl lg:text-9xl font-black tracking-tighter text-foreground leading-[0.8] uppercase italic drop-shadow-2xl">
+          <h1 className="text-5xl md:text-8xl lg:text-9xl font-black tracking-tighter text-foreground leading-[0.8] uppercase italic drop-shadow-2xl text-center">
             Weaponize<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-emerald-400">Intelligence.</span>
           </h1>
-          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium italic opacity-70 px-4">
-            "Don't just scan. Interrogate. Our engine probes DNA metadata and RDAP registries to build a collective student immune system."
+          <p className="text-sm md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium italic opacity-70 px-4 text-center">
+            "One student scans, the entire community gets immunity."
           </p>
         </motion.div>
       </header>
 
+      {/* Trust Nodes - Mobile Optimized */}
+      <section className="py-24 z-10 relative border-y border-border bg-card/10 backdrop-blur-2xl">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16 items-center">
+          <VisualStoryNode icon={<FileSearch size={40} className="text-indigo-400" />} title="Deep DNA Probe" desc="Identify metadata forgeries and suspicious RDAP registry age instantly." />
+          <VisualStoryNode icon={<Globe size={40} className="text-emerald-400" />} title="Global Sync" desc="Cross-reference collective threat signatures in the community ledger." />
+          <VisualStoryNode icon={<ShieldCheck size={40} className="text-primary" />} title="Verified Clearance" desc="Receive cryptographic proof of legitimacy for your career leads." />
+        </div>
+      </section>
+
       {/* Main OS Console */}
       <section className="pb-32 z-10">
         <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             <div className="lg:col-span-8 space-y-8">
               <div className="p-6 md:p-10 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative group overflow-hidden">
@@ -152,11 +160,10 @@ export default function Home() {
                 </div>
 
                 <div className="space-y-6 relative">
-                  {/* MODULAR DEPOSIT ZONE */}
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div 
                       onClick={() => fileInputRef.current?.click()}
-                      className="group/drop relative h-48 rounded-3xl border-2 border-dashed border-border bg-background/50 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer flex flex-col items-center justify-center text-center p-6"
+                      className="group/drop relative h-40 md:h-48 rounded-3xl border-2 border-dashed border-border bg-background/50 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer flex flex-col items-center justify-center text-center p-6"
                     >
                       {isParsingPdf ? (
                         <div className="space-y-4">
@@ -164,13 +171,13 @@ export default function Home() {
                           <p className="text-[10px] font-black uppercase text-primary tracking-widest animate-pulse">Isolating_Artifacts...</p>
                         </div>
                       ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-4 flex flex-col items-center">
                           <div className="h-12 w-12 rounded-2xl bg-accent flex items-center justify-center mx-auto group-hover/drop:scale-110 transition-transform">
                             <FileUp className="text-muted-foreground group-hover/drop:text-primary transition-colors" />
                           </div>
                           <div>
                             <p className="text-xs font-black uppercase text-foreground">Deposit PDF Artifact</p>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Local WASM extraction active</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Local WASM extraction</p>
                           </div>
                         </div>
                       )}
@@ -180,31 +187,28 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="relative group/in">
                         <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within/in:text-primary transition-colors h-4 w-4" />
-                        <input className="w-full h-14 bg-background/80 border border-border rounded-2xl pl-12 pr-6 font-mono text-[10px] focus:border-primary outline-none text-foreground transition-all uppercase placeholder:text-muted-foreground/30" placeholder="ENTITY_IDENTIFIER (COMPANY)..." value={brandName} onChange={e => setBrandName(e.target.value)} />
+                        <input className="w-full h-14 bg-background/80 border border-border rounded-2xl pl-12 pr-6 font-mono text-[10px] focus:border-primary outline-none text-foreground transition-all uppercase placeholder:text-muted-foreground/30" placeholder="ENTITY (COMPANY)..." value={brandName} onChange={e => setBrandName(e.target.value)} />
                       </div>
                       <div className="relative group/in">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within/in:text-primary transition-colors h-4 w-4" />
-                        <input className="w-full h-14 bg-background/80 border border-border rounded-2xl pl-12 pr-6 font-mono text-[10px] focus:border-primary outline-none text-foreground transition-all uppercase placeholder:text-muted-foreground/30" placeholder="HR_EMAIL_DOMAIN_CHECK..." />
+                        <input className="w-full h-14 bg-background/80 border border-border rounded-2xl pl-12 pr-6 font-mono text-[10px] focus:border-primary outline-none text-foreground transition-all uppercase placeholder:text-muted-foreground/30" placeholder="HR_EMAIL_DOMAIN..." />
                       </div>
-                      <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center gap-3">
+                      <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center gap-3 justify-center md:justify-start">
                         <Lock className="text-primary h-3 w-3" />
-                        <p className="text-[8px] font-black uppercase text-primary tracking-widest">Sovereignty: Local-First Parsing Enabled</p>
+                        <p className="text-[8px] font-black uppercase text-primary tracking-widest text-center">Local-First Privacy Active</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="relative">
-                    <textarea className="w-full h-64 bg-background/50 border border-border rounded-3xl p-8 font-mono text-xs focus:border-primary outline-none text-foreground transition-all resize-none shadow-inner leading-relaxed" placeholder="PASTE RAW PAYLOAD (EMAILS, LINKS, OR MESSAGE TEXT)..." value={content} onChange={e => setContent(e.target.value)} />
+                    <textarea className="w-full h-64 bg-background/80 border border-border rounded-3xl p-8 font-mono text-xs focus:border-primary outline-none text-foreground transition-all resize-none shadow-inner leading-relaxed" placeholder="PASTE RAW PAYLOAD (EMAILS, LINKS, OR MESSAGE TEXT)..." value={content} onChange={e => setContent(e.target.value)} />
                     <AnimatePresence>{isScanning && (
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-8 border-2 border-primary/30 z-30 text-center">
-                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="relative mb-10">
-                          <Cpu className="h-20 w-20 text-primary opacity-20" />
-                          <ShieldAlert className="absolute inset-0 m-auto h-10 w-10 text-primary animate-pulse" />
-                        </motion.div>
+                        <Cpu className="h-16 w-12 text-primary animate-pulse mb-8" />
                         <div className="w-full max-w-xs space-y-4">
                           <p className="font-mono text-primary font-bold text-[10px] tracking-[0.5em] uppercase">{SCAN_STEPS[scanStep]}</p>
                           <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
-                            <motion.div className="h-full bg-primary shadow-[0_0_20px_#6366f1]" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 6, ease: "linear" }} />
+                            <motion.div className="h-full bg-primary shadow-[0_0_15px_#6366f1]" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 6, ease: "linear" }} />
                           </div>
                         </div>
                       </motion.div>
@@ -212,29 +216,28 @@ export default function Home() {
                   </div>
                 </div>
 
-                <button onClick={runScan} disabled={isScanning || !content || nodeHealth < 10} className="mt-10 w-full h-24 text-2xl font-black rounded-3xl bg-foreground text-background hover:scale-[1.01] transition-all uppercase tracking-[0.4em] flex items-center justify-center gap-6 dark:bg-white dark:text-black shadow-2xl disabled:opacity-20 shadow-primary/10 italic">
+                <button onClick={runScan} disabled={isScanning || !content || nodeHealth < 10} className="mt-10 w-full h-24 text-2xl font-black rounded-3xl bg-foreground text-background hover:scale-[1.01] transition-all uppercase tracking-[0.4em] flex items-center justify-center gap-6 dark:bg-white dark:text-black shadow-2xl disabled:opacity-20 italic">
                   {isScanning ? "PROBING..." : "INITIATE SCAN"}
                 </button>
 
-                {/* THE OUTPUT MANIFEST */}
                 {result && (
                   <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="mt-16 space-y-12">
-                    <div className="grid md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <TelemetryBox title="DNS_RDAP_REGISTRY" content={result.forensic_data} color="text-primary" />
-                      <TelemetryBox title="METADATA_ANALYSIS" content={fileMeta ? `PRODUCER: ${fileMeta.Producer}\nCREATOR: ${fileMeta.Creator}\nDATE: ${fileMeta.CreationDate}` : "NO_METADATA_EXTRACTED_FROM_RAW_TEXT"} color="text-emerald-500" />
+                      <TelemetryBox title="METADATA_ANALYSIS" content={fileMeta ? `PRODUCER: ${fileMeta.Producer}\nCREATOR: ${fileMeta.Creator}\nDATE: ${fileMeta.CreationDate}` : "NO_METADATA_EXTRACTED"} color="text-emerald-500" />
                     </div>
-                    <div className={cn("p-10 rounded-[4rem] border-2 space-y-10 relative overflow-hidden shadow-inner", result.verdict === "SCAM" ? "bg-red-500/[0.02] border-red-500/30" : result.verdict === "CLEAR" ? "bg-emerald-500/[0.02] border-emerald-500/30" : "bg-amber-500/[0.02] border-amber-500/30")}>
-                      <div className="flex justify-between items-end relative z-10">
-                        <div className="space-y-3">
+                    <div className={cn("p-8 md:p-12 rounded-[3rem] md:rounded-[4rem] border-2 space-y-10 relative overflow-hidden shadow-inner", result.verdict === "SCAM" ? "bg-red-500/[0.02] border-red-500/30" : result.verdict === "CLEAR" ? "bg-emerald-500/[0.02] border-emerald-500/30" : "bg-amber-500/[0.02] border-amber-500/30")}>
+                      <div className="flex flex-col md:flex-row justify-between items-center md:items-end relative z-10 gap-8">
+                        <div className="space-y-3 text-center md:text-left">
                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.5em] opacity-50 italic">Analysis_Verdict</p>
-                          <h4 className={cn("text-6xl font-black uppercase italic tracking-tighter leading-none", result.verdict === "SCAM" ? "text-red-500" : result.verdict === "CLEAR" ? "text-emerald-500" : "text-amber-500")}>{result.verdict}.</h4>
+                          <h4 className={cn("text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-none", result.verdict === "SCAM" ? "text-red-500" : result.verdict === "CLEAR" ? "text-emerald-500" : "text-amber-500")}>{result.verdict}.</h4>
                         </div>
-                        <div className="text-right space-y-3">
+                        <div className="text-center md:text-right space-y-3">
                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.5em] opacity-50 italic">Confidence</p>
-                          <div className="text-5xl font-mono font-bold text-foreground">{result.trust_score || result.confidence}%</div>
+                          <div className="text-4xl md:text-5xl font-mono font-bold text-foreground">{result.trust_score || result.confidence}%</div>
                         </div>
                       </div>
-                      <p className="text-2xl font-medium text-foreground italic leading-relaxed border-l-8 border-primary pl-10 py-4">"{result.analysis}"</p>
+                      <p className="text-lg md:text-2xl font-medium text-foreground italic leading-relaxed border-l-0 md:border-l-8 border-primary pl-0 md:pl-10 py-4 text-center md:text-left leading-relaxed">"{result.analysis}"</p>
                       <DispatchCard result={result} brandName={brandName || "Unknown_Payload"} />
                     </div>
                   </motion.div>
@@ -243,18 +246,17 @@ export default function Home() {
             </div>
 
             <div className="lg:col-span-4 space-y-8">
-              {/* SIDEBAR - MOBILE OPTIMIZED */}
-              <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between border-b border-border pb-6 mb-8 shrink-0">
-                  <div className="flex items-center gap-4"><Network className="h-6 w-6 text-primary" /><span className="text-sm font-black uppercase tracking-[0.4em]">Syndicate_Grid</span></div>
+              <div className="p-8 md:p-10 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative overflow-hidden flex flex-col items-center">
+                <div className="flex items-center justify-between border-b border-border pb-6 mb-8 shrink-0 w-full">
+                  <div className="flex items-center gap-4"><Network className="h-6 w-6 text-primary" /><span className="text-sm font-black uppercase tracking-[0.4em]">Grid_Status</span></div>
                   <div className="h-3 w-3 rounded-full bg-emerald-500 animate-ping shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-8 shrink-0">
+                <div className="grid grid-cols-2 gap-4 mb-8 shrink-0 w-full">
                   <PulseMetric label="Sigs_Logged" value={dbCount} />
                   <PulseMetric label="Active_Nodes" value={activeNodes} color="text-emerald-400" />
                 </div>
-                <div className="flex-1 flex flex-col space-y-6">
-                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.5em] px-2 italic opacity-50">Live_Intel_Stream</p>
+                <div className="flex-1 flex flex-col space-y-6 w-full">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.5em] px-2 italic opacity-50 text-center md:text-left">Live_Intel_Stream</p>
                   <div className="h-64 relative bg-zinc-950/80 rounded-[2rem] border border-zinc-800 p-6 font-mono text-[10px] overflow-hidden shadow-inner">
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
                     <div className="space-y-4">{recentThreats.map((t, i) => (
@@ -265,7 +267,7 @@ export default function Home() {
                     ))}</div>
                   </div>
                 </div>
-                <div className="mt-8 p-6 rounded-3xl bg-primary text-background flex items-center gap-5 shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all">
+                <div className="mt-8 p-6 rounded-3xl bg-primary text-background flex items-center gap-5 shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all w-full justify-center">
                   <ShieldCheck size={32} />
                   <div>
                     <p className="text-[8px] font-black uppercase tracking-widest opacity-70 leading-none">Syndicate_Status</p>
@@ -278,12 +280,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Origin Story */}
-      <section className="py-32 z-10 relative overflow-hidden border-t border-border">
+      {/* Origin Story - Mobile Centered */}
+      <section className="py-32 z-10 relative overflow-hidden border-t border-border flex flex-col items-center">
         <div className="max-w-5xl mx-auto px-6 text-center space-y-12">
           <div className="h-20 w-20 rounded-[2.5rem] bg-accent border border-border flex items-center justify-center mx-auto shadow-2xl"><Radio className="text-primary animate-pulse" /></div>
-          <h2 className="text-5xl md:text-7xl font-black text-foreground uppercase italic tracking-tighter leading-none">Built because<br /><span className="text-primary">Silence is a Scam.</span></h2>
-          <p className="text-xl md:text-2xl text-muted-foreground font-medium italic leading-relaxed max-w-3xl mx-auto">"One student's silence is a scammer's best friend. We built the Syndicate because the only way to beat automated malice is with collective intelligence."</p>
+          <h2 className="text-4xl md:text-7xl font-black text-foreground uppercase italic tracking-tighter leading-tight text-center">Built because<br /><span className="text-primary">Silence is a Scam.</span></h2>
+          <p className="text-base md:text-2xl text-muted-foreground font-medium italic leading-relaxed max-w-3xl mx-auto text-center px-4">"One student's silence is a scammer's best friend. We built the Syndicate because the only way to beat automated malice is with collective intelligence."</p>
         </div>
       </section>
     </div>
@@ -292,7 +294,7 @@ export default function Home() {
 
 function PulseMetric({ label, value, color = "text-primary" }: any) {
   return (
-    <div className="p-6 rounded-[2rem] bg-background/50 border border-border flex flex-col justify-center">
+    <div className="p-6 rounded-[2rem] bg-background/50 border border-border flex flex-col justify-center items-center text-center">
       <div className="text-2xl md:text-3xl font-black text-foreground font-mono leading-none">{value.toLocaleString()}</div>
       <div className={`text-[8px] font-black ${color} uppercase tracking-[0.3em] mt-3 opacity-80 leading-none`}>{label}</div>
     </div>
@@ -301,13 +303,27 @@ function PulseMetric({ label, value, color = "text-primary" }: any) {
 
 function TelemetryBox({ title, content, color }: any) {
   return (
-    <div className="p-6 rounded-3xl bg-[#09090b] border border-zinc-800 font-mono text-[10px] text-zinc-500 relative overflow-hidden shadow-2xl">
+    <div className="p-6 rounded-3xl bg-[#09090b] border border-zinc-800 font-mono text-[10px] text-zinc-500 relative overflow-hidden shadow-2xl text-center md:text-left">
       <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-3">
         <p className={`${color} font-black tracking-[0.3em]`}>{title}</p>
         <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
       </div>
       <pre className="leading-relaxed opacity-90 whitespace-pre-wrap">{content || "AWAITING_INPUT..."}</pre>
     </div>
+  )
+}
+
+function VisualStoryNode({ icon, title, desc }: any) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-6 group flex flex-col items-center text-center">
+      <div className="h-24 w-24 rounded-[2rem] bg-accent border border-border flex items-center justify-center group-hover:scale-110 transition-all duration-500 shadow-xl">
+        {icon}
+      </div>
+      <div className="space-y-3">
+        <h3 className="text-2xl font-black uppercase italic tracking-tight">{title}</h3>
+        <p className="text-muted-foreground font-medium italic leading-relaxed opacity-80 px-4">{desc}</p>
+      </div>
+    </motion.div>
   )
 }
 
