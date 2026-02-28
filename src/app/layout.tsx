@@ -40,16 +40,16 @@ export default function RootLayout({
                   </div>
                 </Link>
 
-                <nav className="hidden md:flex items-center gap-10">
-                  <NavLink href="/" label="Console" icon={<Activity size={12} />} />
-                  <NavLink href="/threats" label="Threat_Feed" icon={<LayoutGrid size={12} />} />
-                  <SignedIn>
-                    <NavLink href="/dashboard" label="Dashboard" icon={<Database size={12} />} />
-                  </SignedIn>
-                  <NavLink href="/api-docs" label="Uplink" icon={<Code size={12} />} />
-                </nav>
-
-                <div className="flex items-center gap-6">
+                              <nav className="hidden md:flex items-center gap-10">
+                                <NavLink href="/" label="Console" icon={<Activity size={12} />} />
+                                <NavLink href="/intel" label="Intel_Vault" icon={<BookOpen size={12} />} />
+                                <NavLink href="/threats" label="Threat_Feed" icon={<LayoutGrid size={12} />} />
+                                <SignedIn>
+                                  <NavLink href="/dashboard" label="Dashboard" icon={<Database size={12} />} />
+                                </SignedIn>
+                                <NavLink href="/api-docs" label="Uplink" icon={<Code size={12} />} />
+                              </nav>
+                                <div className="flex items-center gap-6">
                   <ThemeToggle />
                   <SignedOut>
                     <SignInButton mode="modal">
