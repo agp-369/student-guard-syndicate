@@ -79,15 +79,19 @@ export default function Home() {
     if (!file) return
     setIsParsingPdf(true)
     try {
-      // PRO-TIP: Use version matching the installed pdfjs-dist
+      // Use standard worker loading for pdfjs-dist 5.x
       const pdfjsLib = await import('pdfjs-dist')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`
+      // Correct worker URL matching the package version in package.json (5.4.624)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.624/build/pdf.worker.min.mjs`
       
       const arrayBuffer = await file.arrayBuffer()
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+      const loadingTask = pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        useSystemFonts: true,
+        isEvalSupported: false 
+      })
       const pdf = await loadingTask.promise
       
-      // EXTRACTION: Text + Metadata
       const meta = await pdf.getMetadata()
       setFileMeta(meta.info)
 
@@ -98,10 +102,12 @@ export default function Home() {
         const strings = textContent.items.map((item: any) => item.str)
         fullText += strings.join(" ") + "\n"
       }
+      
+      if (!fullText.trim()) throw new Error("EMPTY_TEXT")
       setContent(fullText)
     } catch (err) {
-      console.error("PDF Parsing Node Failure:", err)
-      alert("Sovereign Node: Internal parsing failure. Please paste the offer text manually.")
+      console.error("Forensic Node Error:", err)
+      alert("Sovereign Node: Parsing failure. This usually happens with protected or image-only PDFs. Please paste the text manually for analysis.")
     } finally {
       setIsParsingPdf(false)
     }
@@ -120,7 +126,7 @@ export default function Home() {
       
       setResult(data)
       setNodeHealth(prev => Math.max(0, prev - 20))
-    } catch (e: any) { alert(`Sync Error: ${e.message}`); } finally { setIsScanning(false) }
+    } catch (e: any) { alert(`Sync Error: Critical Node Failure`); } finally { setIsScanning(false) }
   }
 
   return (
@@ -222,7 +228,7 @@ export default function Home() {
                     <AnimatePresence>{isScanning && (
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-8 border-2 border-primary/30 z-30 text-center">
                         <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="relative mb-10">
-                          <Cpu className="h-20 w-20 text-primary opacity-20" />
+                          <Cpu className="h-16 w-12 text-primary animate-pulse mb-8" />
                           <ShieldAlert className="absolute inset-0 m-auto h-10 w-10 text-primary animate-pulse" />
                         </motion.div>
                         <div className="w-full max-w-xs space-y-4">
@@ -258,7 +264,7 @@ export default function Home() {
                           <div className="text-4xl md:text-5xl font-mono font-bold text-foreground">{result.trust_score || result.confidence}%</div>
                         </div>
                       </div>
-                      <p className="text-lg md:text-2xl font-medium text-foreground italic border-l-0 md:border-l-8 border-primary pl-0 md:pl-10 py-4 text-center md:text-left leading-relaxed">"{result.analysis}"</p>
+                      <p className="text-lg md:text-2xl font-medium text-foreground italic leading-relaxed border-l-0 md:border-l-8 border-primary pl-0 md:pl-10 py-4 text-center md:text-left leading-relaxed">"{result.analysis}"</p>
                       
                       <div className="flex flex-col md:flex-row items-center gap-8 p-8 rounded-3xl bg-background/50 border border-border">
                         <div className="h-16 w-16 rounded-full border-4 border-primary/20 flex items-center justify-center relative shrink-0">
@@ -280,7 +286,7 @@ export default function Home() {
             <div className="lg:col-span-4 space-y-8 w-full flex flex-col items-center">
               <div className="w-full p-8 md:p-10 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative overflow-hidden flex flex-col items-center">
                 <div className="flex items-center justify-between border-b border-border pb-6 mb-8 shrink-0 w-full">
-                  <div className="flex items-center gap-4"><Network className="h-6 w-6 text-primary" /><span className="text-sm font-black uppercase tracking-[0.4em]">Grid_Status</span></div>
+                  <div className="flex items-center gap-4"><Network className="h-6 w-6 text-primary" /><span className="text-sm font-black uppercase tracking-[0.4em]">Syndicate_Grid</span></div>
                   <div className="h-3 w-3 rounded-full bg-emerald-500 animate-ping shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-8 shrink-0 w-full">
@@ -312,7 +318,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Origin Story */}
       <section className="py-32 z-10 relative overflow-hidden border-t border-border flex flex-col items-center">
         <div className="max-w-5xl mx-auto px-6 text-center space-y-12">
           <div className="h-20 w-20 rounded-[2.5rem] bg-accent border border-border flex items-center justify-center mx-auto shadow-2xl"><Radio className="text-primary animate-pulse" /></div>
