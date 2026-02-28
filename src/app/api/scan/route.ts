@@ -12,70 +12,72 @@ function extractDomains(text: string) {
 async function checkDomainAge(domain: string) {
   try {
     const res = await fetch(`https://rdap.org/domain/${domain}`, { next: { revalidate: 3600 } });
-    if (!res.ok) return `Could not fetch RDAP for ${domain}.`;
+    if (!res.ok) return { age: null, raw: `RDAP_FAILURE: ${domain}` };
     const data = await res.json();
     const regEvent = data.events?.find((e: any) => e.eventAction === "registration");
     if (regEvent && regEvent.eventDate) {
       const regDate = new Date(regEvent.eventDate);
       const ageDays = Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24));
-      return `Domain '${domain}' registered on ${regDate.toISOString().split('T')[0]} (Age: ${ageDays} days).`;
+      return { age: ageDays, raw: `Domain: ${domain} | Registered: ${regDate.toISOString().split('T')[0]} (${ageDays} days ago)` };
     }
-    return `Domain '${domain}' exists (history cloaked).`;
-  } catch (e) { return `RDAP Probe Failed for ${domain}.`; }
+    return { age: null, raw: `Domain: ${domain} | Registration hidden.` };
+  } catch (e) { return { age: null, raw: `PROBE_ERROR: ${domain}` }; }
 }
 
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
     const { content, brandName, fileMeta } = await req.json();
-    if (!content) return new NextResponse("Scanning Payload Missing", { status: 400 });
+    if (!content) return new NextResponse("PAYLOAD_NULL", { status: 400 });
 
+    // 1. HARD FORENSICS
     const domains = extractDomains(content);
-    let forensicEvidence = "--- REAL-TIME DNS FORENSICS ---\n";
-    if (domains.length > 0) {
-      const domainChecks = await Promise.all(domains.slice(0, 2).map(d => checkDomainAge(d)));
-      forensicEvidence += domainChecks.join("\n") + "\n";
-    } else {
-      forensicEvidence += "No domains detected in payload.\n";
-    }
+    const domainResults = await Promise.all(domains.slice(0, 2).map(d => checkDomainAge(d)));
+    const forensicText = domainResults.map(r => r.raw).join("\n");
+    const minAge = Math.min(...domainResults.map(r => r.age || 9999));
 
-    if (fileMeta) {
-      forensicEvidence += `\n--- FILE METADATA FORENSICS ---\nPRODUCER: ${fileMeta.Producer}\nCREATOR: ${fileMeta.Creator}\n-------------------------------\n`;
-    }
-
+    // 2. INTELLIGENCE SYNTHESIS
     const systemInstruction = `
-      You are 'StudentGuard Core', an elite Cyber-Forensics AI using Gemini 2.5 Flash.
-      TASK: Analyze the provided content for recruitment fraud.
+      You are 'Sentinel-1', the core AI of the StudentGuard Syndicate.
+      MISSION: Provide a definitive security clearance for a job/internship lead.
       
-      FORENSIC RULE: 
-      1. If DNS Forensics say a domain is < 180 days old, it is high risk.
-      2. If File Metadata shows a 'Producer' like 'iLovePDF' or 'SmallPDF' for a major corporation (e.g. Amazon, Google), it is a FORGERY.
+      RULES:
+      - BRAND NEW DOMAINS (<180 days) = SCAM.
+      - GMAIL/OUTLOOK for large corps = SCAM.
+      - Metadata forgery (e.g. Acme Corp PDF made in 'iLovePDF') = SCAM.
       
-      OUTPUT: Return ONLY valid JSON with keys: verdict ("CLEAR", "CAUTION", "SCAM"), confidence (0-100), red_flags, analysis, recommendation, category.
+      OUTPUT: Return ONLY JSON with:
+      - verdict: "CLEAR" | "CAUTION" | "SCAM"
+      - trust_score: number (0-100)
+      - red_flags: string[]
+      - analysis: string
+      - recommendation: string
+      - category: string
     `;
 
-    const response = await generateAIResponse(`TEXT:\n${content}\n\n${forensicEvidence}`, systemInstruction);
+    const response = await generateAIResponse(`DATA:\n${content}\n\nFORENSICS:\n${forensicText}`, systemInstruction);
     let result;
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       result = JSON.parse(jsonMatch ? jsonMatch[0] : response);
-      result.forensic_data = forensicEvidence;
-    } catch (parseErr) { return new NextResponse("Intelligence Node Error", { status: 500 }); }
+      result.forensic_data = forensicText;
+    } catch (e) { return new NextResponse("INTEL_PARSE_ERROR", { status: 500 }); }
 
+    // 3. REPUTATION LEDGER SYNC
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       if (supabaseUrl && supabaseKey && result.verdict === "SCAM") {
         const supabase = createClient(supabaseUrl, supabaseKey);
         await supabase.from('community_threats').insert({
-          brand_name: brandName || "Target_Unknown",
-          domain: domains[0] || "No_URL",
-          category: result.category || "General_Fraud",
-          user_id: userId || "anonymous"
+          brand_name: brandName || "UNDISCLOSED_ENTITY",
+          domain: domains[0] || "NO_URL",
+          category: result.category || "GENERAL_FRAUD",
+          user_id: userId || "ANONYMOUS_NODE"
         });
       }
-    } catch (syncErr) { console.warn("Syndicate Ledger Offline."); }
+    } catch (syncErr) {}
 
     return NextResponse.json(result);
-  } catch (error: any) { return new NextResponse(error.message, { status: 500 }); }
+  } catch (error: any) { return new NextResponse("NODE_SYNC_FAILURE", { status: 500 }); }
 }
