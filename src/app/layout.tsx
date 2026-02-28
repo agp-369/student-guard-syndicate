@@ -1,25 +1,24 @@
-import type { Metadata } from "next";
+"use client"
+
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { ShieldCheck, LayoutGrid, Activity, BookOpen, Globe, Code, ShieldAlert, Database, Menu } from "lucide-react";
+import { useState } from "react";
+import { ShieldCheck, LayoutGrid, Activity, BookOpen, Code, ShieldAlert, Database, Menu, X, Globe } from "lucide-react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ThreatTicker } from "@/components/threat-ticker";
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { motion, AnimatePresence } from "framer-motion";
 
 const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "StudentGuard Syndicate | Community Defense",
-  description: "Protecting the student community from recruitment fraud using sovereign AI intelligence.",
-};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_YnVpbGQtc3RhYmlsaXR5LWtleS0wMC5jbGVyay5hY2NvdW50cy5kZXYk";
 
   return (
@@ -39,6 +38,7 @@ export default function RootLayout({
                   </div>
                 </Link>
 
+                {/* Desktop Nav */}
                 <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
                   <NavLink href="/" label="Console" icon={<Activity size={12} />} />
                   <NavLink href="/intel" label="Intel_Vault" icon={<BookOpen size={12} />} />
@@ -65,10 +65,43 @@ export default function RootLayout({
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse hidden xs:block" />
                     <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground hidden md:block">Grid_Online</span>
                   </div>
-                  <button className="lg:hidden h-10 w-10 flex items-center justify-center text-muted-foreground"><Menu size={20} /></button>
+                  <button onClick={() => setIsMenuOpen(true)} className="lg:hidden h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
+                    <Menu size={24} />
+                  </button>
                 </div>
               </div>
             </header>
+
+            {/* Mobile Menu Overlay */}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMenuOpen(false)} className="fixed inset-0 bg-background/80 backdrop-blur-md z-[110] lg:hidden" />
+                  <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="fixed top-0 right-0 h-full w-[280px] bg-card border-l border-border z-[120] p-8 lg:hidden shadow-2xl">
+                    <div className="flex justify-between items-center mb-12">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className="text-primary h-5 w-5" />
+                        <span className="font-black text-sm uppercase italic">Menu</span>
+                      </div>
+                      <button onClick={() => setIsMenuOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-accent text-muted-foreground"><X size={20} /></button>
+                    </div>
+                    <nav className="flex flex-col gap-6">
+                      <MobileNavLink href="/" label="Console" icon={<Activity size={16} />} onClick={() => setIsMenuOpen(false)} />
+                      <MobileNavLink href="/intel" label="Intel_Vault" icon={<BookOpen size={16} />} onClick={() => setIsMenuOpen(false)} />
+                      <MobileNavLink href="/threats" label="Threat_Feed" icon={<LayoutGrid size={16} />} onClick={() => setIsMenuOpen(false)} />
+                      <SignedIn>
+                        <MobileNavLink href="/dashboard" label="Dashboard" icon={<Database size={16} />} onClick={() => setIsMenuOpen(false)} />
+                      </SignedIn>
+                      <MobileNavLink href="/api-docs" label="Uplink" icon={<Code size={16} />} onClick={() => setIsMenuOpen(false)} />
+                    </nav>
+                    <div className="mt-12 pt-8 border-t border-border flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Theme</span>
+                      <ThemeToggle />
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
 
             <ThreatTicker />
             <main className="min-h-screen pt-20 md:pt-28">{children}</main>
@@ -114,6 +147,15 @@ function NavLink({ href, label, icon }: { href: string, label: string, icon: Rea
   return (
     <Link href={href} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground transition-all group shrink-0">
       <span className="group-hover:text-primary transition-transform group-hover:scale-110">{icon}</span>
+      {label}
+    </Link>
+  )
+}
+
+function MobileNavLink({ href, label, icon, onClick }: { href: string, label: string, icon: React.ReactNode, onClick: () => void }) {
+  return (
+    <Link href={href} onClick={onClick} className="flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-all">
+      <span className="text-primary/50">{icon}</span>
       {label}
     </Link>
   )
