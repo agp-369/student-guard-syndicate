@@ -79,19 +79,19 @@ export default function Home() {
     if (!file) return
     setIsParsingPdf(true)
     try {
-      // Use standard worker loading for pdfjs-dist 5.x
-      const pdfjsLib = await import('pdfjs-dist')
-      // Correct worker URL matching the package version in package.json (5.4.624)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.624/build/pdf.worker.min.mjs`
+      // 🛡️ RE-HARDENED WORKER PROTOCOL
+      const pdfjs = await import('pdfjs-dist')
+      // Use exact unpkg URL for the version installed
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
       
       const arrayBuffer = await file.arrayBuffer()
-      const loadingTask = pdfjsLib.getDocument({ 
+      const loadingTask = pdfjs.getDocument({ 
         data: arrayBuffer,
         useSystemFonts: true,
         isEvalSupported: false 
       })
-      const pdf = await loadingTask.promise
       
+      const pdf = await loadingTask.promise
       const meta = await pdf.getMetadata()
       setFileMeta(meta.info)
 
@@ -103,11 +103,11 @@ export default function Home() {
         fullText += strings.join(" ") + "\n"
       }
       
-      if (!fullText.trim()) throw new Error("EMPTY_TEXT")
+      if (!fullText.trim()) throw new Error("ZERO_TEXT_EXTRACTED")
       setContent(fullText)
     } catch (err) {
-      console.error("Forensic Node Error:", err)
-      alert("Sovereign Node: Parsing failure. This usually happens with protected or image-only PDFs. Please paste the text manually for analysis.")
+      console.error("Forensic Node Failure:", err)
+      alert("Sovereign Node: Internal parsing failed. Please ensure the file is a text-based PDF or paste the content manually.")
     } finally {
       setIsParsingPdf(false)
     }
@@ -120,13 +120,10 @@ export default function Home() {
       const res = await fetch("/api/scan", { method: "POST", body: JSON.stringify({ content, brandName, fileMeta }) })
       const responseText = await res.text();
       if (!res.ok) throw new Error(responseText);
-      
       const data = JSON.parse(responseText);
-      if (data.verdict === "SAFE") data.verdict = "CLEAR";
-      
       setResult(data)
       setNodeHealth(prev => Math.max(0, prev - 20))
-    } catch (e: any) { alert(`Sync Error: Critical Node Failure`); } finally { setIsScanning(false) }
+    } catch (e: any) { alert(`Sync Error: Node Offline`); } finally { setIsScanning(false) }
   }
 
   return (
@@ -143,7 +140,7 @@ export default function Home() {
             Weaponize<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-emerald-400 animate-gradient-x">Intelligence.</span>
           </h1>
           <p className="text-sm md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium italic opacity-70 px-4 text-center leading-relaxed">
-            "One student scans, the entire community gets immunity. Sovereign forensics for the next generation of careers."
+            "We extract the DNA of fraud. Verify opportunities with cryptographic certainty. One scan strengthens the entire Syndicate."
           </p>
         </motion.div>
       </header>
@@ -226,9 +223,9 @@ export default function Home() {
                   <div className="relative w-full">
                     <textarea className="w-full h-64 bg-background/80 border border-border rounded-3xl p-8 font-mono text-xs focus:border-primary outline-none text-foreground transition-all resize-none shadow-inner leading-relaxed" placeholder="PASTE RAW PAYLOAD (EMAILS, LINKS, OR MESSAGE TEXT)..." value={content} onChange={e => setContent(e.target.value)} />
                     <AnimatePresence>{isScanning && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-8 border-2 border-primary/30 z-30 text-center">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-12 border-2 border-primary/30 z-30 text-center">
                         <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="relative mb-10">
-                          <Cpu className="h-16 w-12 text-primary animate-pulse mb-8" />
+                          <Cpu className="h-20 w-20 text-primary opacity-20" />
                           <ShieldAlert className="absolute inset-0 m-auto h-10 w-10 text-primary animate-pulse" />
                         </motion.div>
                         <div className="w-full max-w-xs space-y-4">
@@ -265,17 +262,6 @@ export default function Home() {
                         </div>
                       </div>
                       <p className="text-lg md:text-2xl font-medium text-foreground italic leading-relaxed border-l-0 md:border-l-8 border-primary pl-0 md:pl-10 py-4 text-center md:text-left leading-relaxed">"{result.analysis}"</p>
-                      
-                      <div className="flex flex-col md:flex-row items-center gap-8 p-8 rounded-3xl bg-background/50 border border-border">
-                        <div className="h-16 w-16 rounded-full border-4 border-primary/20 flex items-center justify-center relative shrink-0">
-                          <BarChart3 className="text-primary animate-pulse" size={24} />
-                          <div className="absolute inset-[-4px] rounded-full border-4 border-primary border-t-transparent animate-spin" />
-                        </div>
-                        <div className="text-center md:text-left">
-                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.5em]">Consensus_Weight</p>
-                          <p className="text-lg font-bold text-foreground uppercase italic tracking-widest">99.4% Verified Accuracy</p>
-                        </div>
-                      </div>
                       <DispatchCard result={result} brandName={brandName || "Unknown_Payload"} />
                     </div>
                   </motion.div>
