@@ -31,7 +31,6 @@ export function ReputationSearch() {
       .ilike('brand_name', `%${query}%`)
       .limit(1)
     
-    // Simulate deep network probe delay for UX "Realism"
     await new Promise(resolve => setTimeout(resolve, 800))
     
     if (data && data.length > 0) {
@@ -51,14 +50,14 @@ export function ReputationSearch() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder="SEARCH_SYNDICATE_REGISTRY (e.g. Acme Corp)..." 
+          placeholder="SEARCH_SYNDICATE_REGISTRY..." 
           className="w-full h-20 bg-card border-2 border-border rounded-[2.5rem] pl-16 pr-8 font-mono text-xs font-bold text-foreground outline-none focus:border-primary/50 transition-all relative z-10 shadow-2xl uppercase tracking-widest"
         />
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
         <button 
           onClick={handleSearch}
           disabled={isSearching}
-          className="absolute right-4 top-1/2 -translate-y-1/2 h-12 px-6 rounded-2xl bg-foreground text-background dark:bg-white dark:text-black font-black uppercase text-[10px] tracking-widest z-10 hover:scale-105 transition-all disabled:opacity-50"
+          className="absolute right-4 top-1/2 -translate-y-1/2 h-12 px-6 rounded-2xl bg-foreground text-background dark:bg-white dark:text-black font-black uppercase text-[10px] tracking-widest z-10 hover:scale-105 transition-all disabled:opacity-50 cursor-pointer"
         >
           {isSearching ? <Loader2 className="animate-spin" /> : "PROBE_DB"}
         </button>
@@ -76,22 +75,16 @@ export function ReputationSearch() {
               <div className={`h-16 w-16 rounded-2xl flex items-center justify-center border ${result.status === 'THREAT' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
                 {result.status === 'THREAT' ? <ShieldAlert size={32} /> : <ShieldCheck size={32} />}
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 text-left">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 italic">Syndicate_Resolution</p>
-                <h4 className="text-2xl font-black uppercase italic tracking-tighter text-foreground">
+                <h4 className="text-2xl font-black uppercase italic tracking-tighter text-foreground text-left">
                   {result.status === 'THREAT' ? `Threat_Detected: ${result.data.brand_name}` : "Entity_Not_Flagged"}
                 </h4>
-                <p className="text-xs font-medium text-muted-foreground italic">
-                  {result.status === 'THREAT' ? `This entity has been neutralized by the community. Avoid all contact.` : "No active threats found for this entity in the global registry."}
+                <p className="text-xs font-medium text-muted-foreground italic text-left">
+                  {result.status === 'THREAT' ? `Neutralized by community. Avoid all contact.` : "No active threats found in global registry."}
                 </p>
               </div>
             </div>
-            {result.status === 'THREAT' && (
-              <div className="text-right">
-                <p className="text-[8px] font-black text-red-500 uppercase tracking-[0.3em]">Signature_ID</p>
-                <p className="text-sm font-mono font-bold text-foreground">SG_{result.data.id.substring(0,6).toUpperCase()}</p>
-              </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

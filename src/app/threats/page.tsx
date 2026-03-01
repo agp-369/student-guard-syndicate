@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { AlertTriangle, ShieldCheck, Search, Globe, Activity, Loader2, ShieldAlert, Radio, Map, BarChart3, Users, RefreshCw } from "lucide-react"
+import { AlertTriangle, ShieldCheck, Globe, Activity, Loader2, ShieldAlert, Radio, RefreshCw } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 import { motion } from "framer-motion"
 
@@ -15,30 +15,35 @@ const getSupabase = () => {
 export default function IntelligenceHub() {
   const [threats, setThreats] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [view, setView] = useState("all") // "scams" | "clear" | "all"
+  const [view, setView] = useState("all")
 
   useEffect(() => { 
     const supabase = getSupabase();
-    if (supabase) fetchThreats(supabase);
+    if (!supabase) return;
+    fetchThreats(supabase);
+
+    // Hybrid Sync: Realtime + Polling fallback
+    const interval = setInterval(() => fetchThreats(supabase, false), 10000);
+    const channel = supabase.channel('threats_polling').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
+      fetchThreats(supabase, false);
+    }).subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    }
   }, [view])
 
-  const fetchThreats = async (supabase: any) => {
-    setIsLoading(true)
+  const fetchThreats = async (supabase: any, showLoader = true) => {
+    if (showLoader) setIsLoading(true)
     let query = supabase.from('community_threats').select('*').order('created_at', { ascending: false });
     
     if (view === "scams") query = query.eq('verdict', 'SCAM');
     if (view === "clear") query = query.eq('verdict', 'CLEAR');
 
-    const { data, error } = await query.limit(20)
-    
-    if (error) console.error("Fetch Error:", error.message);
+    const { data } = await query.limit(20)
     if (data) setThreats(data)
     setIsLoading(false)
-  }
-
-  const manualRefresh = () => {
-    const supabase = getSupabase();
-    if (supabase) fetchThreats(supabase);
   }
 
   return (
@@ -52,27 +57,27 @@ export default function IntelligenceHub() {
             Global <span className="text-primary">Ledger.</span>
           </h1>
         </div>
-        <button onClick={manualRefresh} className="h-14 w-14 rounded-2xl bg-accent border border-border flex items-center justify-center hover:text-primary transition-all shadow-xl">
+        <button onClick={() => fetchThreats(getSupabase())} className="h-14 w-14 rounded-2xl bg-accent border border-border flex items-center justify-center hover:text-primary transition-all shadow-xl cursor-pointer">
           <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} />
         </button>
       </header>
 
       <div className="flex gap-4 p-1.5 rounded-2xl bg-card border border-border w-fit">
-        <button onClick={() => setView("all")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'all' ? 'bg-primary text-white' : 'text-muted-foreground'}`}>All_Signals</button>
-        <button onClick={() => setView("scams")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'scams' ? 'bg-red-500 text-white' : 'text-muted-foreground'}`}>Threats</button>
-        <button onClick={() => setView("clear")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'clear' ? 'bg-emerald-500 text-white' : 'text-muted-foreground'}`}>Cleared</button>
+        <button onClick={() => setView("all")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${view === 'all' ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground'}`}>All_Signals</button>
+        <button onClick={() => setView("scams")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${view === 'scams' ? 'bg-red-500 text-white shadow-lg' : 'text-muted-foreground'}`}>Threats</button>
+        <button onClick={() => setView("clear")} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${view === 'clear' ? 'bg-emerald-500 text-white shadow-lg' : 'text-muted-foreground'}`}>Cleared</button>
       </div>
 
       <div className="grid gap-4">
-        {isLoading ? (
+        {isLoading && threats.length === 0 ? (
           <div className="py-32 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>
         ) : threats.length > 0 ? threats.map((t, i) => (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={t.id} className="p-6 rounded-[2rem] bg-card border border-border flex flex-col md:flex-row items-center justify-between gap-8 group">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={t.id} className="p-6 rounded-[2rem] bg-card border border-border flex flex-col md:flex-row items-center justify-between gap-8 group relative overflow-hidden">
             <div className="flex items-center gap-6 w-full">
               <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border ${t.verdict === 'SCAM' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
                 {t.verdict === 'SCAM' ? <ShieldAlert size={24} /> : <ShieldCheck size={24} />}
               </div>
-              <div>
+              <div className="text-left">
                 <h4 className="text-xl font-black uppercase italic text-foreground">{t.brand_name}</h4>
                 <p className="text-[10px] font-mono text-muted-foreground mt-1 uppercase tracking-widest">{t.domain} // {t.category}</p>
               </div>
