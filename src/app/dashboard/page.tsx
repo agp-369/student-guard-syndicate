@@ -122,7 +122,7 @@ export default function Dashboard() {
             {isLoading ? (
               <div className="py-20 text-center font-mono uppercase text-xs animate-pulse">Decrypting_History_Stream...</div>
             ) : history.length > 0 ? history.map((item, idx) => (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} key={idx} className="flex justify-between items-center p-6 rounded-2xl bg-accent/30 border border-border hover:bg-accent/50 transition-all group">
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, y: 0 }} key={idx} className="flex justify-between items-center p-6 rounded-2xl bg-accent/30 border border-border hover:bg-accent/50 transition-all group">
                 <div className="flex items-center gap-8">
                   <div className="h-10 w-10 rounded-xl bg-background border border-border flex items-center justify-center group-hover:text-primary transition-colors italic font-black text-xs">{idx + 1}</div>
                   <div>
@@ -147,7 +147,7 @@ export default function Dashboard() {
             <h3 className="text-3xl font-black uppercase italic leading-none relative z-10 text-white">Syndicate<br />Authority.</h3>
             <div className="space-y-2 relative z-10 text-white">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Node Security Level</p>
-              <p className="text-5xl font-black font-mono">{Math.floor(history.length / 2) + 1}</p>
+              <p className="text-5xl font-black text-white font-mono">{Math.floor(history.length / 2) + 1}</p>
             </div>
             <div className="h-1 w-full bg-black/20 rounded-full overflow-hidden relative z-10">
               <div className="h-full bg-white" style={{ width: `${(history.length % 2) * 50 + 10}%` }} />
