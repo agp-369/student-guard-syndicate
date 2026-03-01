@@ -42,3 +42,7 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Submission Assets
+SUBMISSION_PACK.md
+TEST_PAYLOADS.md

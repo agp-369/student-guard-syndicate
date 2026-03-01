@@ -300,6 +300,36 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 🔮 THE FUTURE PROTOCOL: Trust & Vision */}
+      <section className="py-24 z-10 relative border-y border-border bg-card/10 backdrop-blur-2xl">
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+          <div className="space-y-8">
+            <h2 className="text-4xl md:text-6xl font-black text-foreground uppercase italic tracking-tighter leading-none">
+              The Syndicate<br /><span className="text-primary">Future Roadmap.</span>
+            </h2>
+            <p className="text-muted-foreground font-medium italic leading-relaxed text-lg">
+              "We aren't just building a scanner. We are building the global trust layer for the student economy. Our goal is to make recruitment fraud a relic of the past."
+            </p>
+            <div className="space-y-4">
+              <FutureNode label="Browser Sentinel" desc="Real-time scanning integrated directly into Gmail and LinkedIn via extension." />
+              <FutureNode label="Verified Recruiter Keys" desc="Official HR nodes can cryptographically sign offers to bypass Syndicate probes." />
+              <FutureNode label="Global University Uplink" desc="Direct integration with 500+ university career placement portals by 2027." />
+            </div>
+          </div>
+          <div className="p-10 rounded-[3rem] bg-accent/20 border-2 border-border shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-primary/5 group-hover:scale-110 transition-transform duration-700" />
+            <Terminal className="text-primary h-8 w-8 mb-6" />
+            <h3 className="text-2xl font-black uppercase italic mb-4">Protocol Origin</h3>
+            <p className="text-muted-foreground font-medium italic leading-relaxed">
+              "I watched a close friend spend three weeks in a fake 'Amazon' interview. He was so excited for his first real internship. They sent him a $1,200 'equipment check', asked him to buy a specific MacBook, and then... silence. The check bounced. His bank account was drained. He didn't just lose money; he lost his hope in the career he'd worked for years to build."
+            </p>
+            <p className="text-muted-foreground font-medium italic leading-relaxed mt-4 border-l-2 border-primary pl-4">
+              "I built the Syndicate so that no student ever has to feel that silence again. Silence is the scammer's best friend. Knowledge is our weapon."
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Origin Story */}
       <section className="py-32 z-10 relative overflow-hidden border-t border-border flex flex-col items-center text-center">
         <div className="max-w-5xl mx-auto px-6 space-y-12">
@@ -344,6 +374,20 @@ function VisualStoryNode({ icon, title, desc }: any) {
         <p className="text-muted-foreground font-medium italic leading-relaxed opacity-80 px-4">{desc}</p>
       </div>
     </motion.div>
+  )
+}
+
+function FutureNode({ label, desc }: any) {
+  return (
+    <div className="flex gap-6 items-start group">
+      <div className="h-10 w-10 shrink-0 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+        <Zap size={16} />
+      </div>
+      <div>
+        <h4 className="text-sm font-black uppercase italic text-foreground tracking-widest">{label}</h4>
+        <p className="text-xs text-muted-foreground font-medium italic mt-1">{desc}</p>
+      </div>
+    </div>
   )
 }
 
