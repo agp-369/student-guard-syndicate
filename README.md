@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ StudentGuard Syndicate
+### *Engineering Global Immunity for the Next Generation of Careers.*
 
-## Getting Started
+[![Sovereignty Node: Active](https://img.shields.io/badge/Sovereignty_Node-Active-emerald.svg?style=for-the-badge&logo=shield)](https://student-guard-syndicate.vercel.app)
+[![Intelligence: Gemini 2.5 Flash](https://img.shields.io/badge/Intelligence-Gemini_2.5_Flash-indigo.svg?style=for-the-badge&logo=google-gemini)](https://ai.google.dev)
 
-First, run the development server:
+StudentGuard Syndicate is a high-fidelity, sovereign community defense network designed to weaponize collective intelligence against recruitment fraud. Unlike traditional scanners, the Syndicate uses multi-layer forensics—extracting hidden metadata and pinging global DNS registries—to build a decentralized immune system for students entering the workforce.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🏛️ Core Architectural Protocols
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Forensic DNA Probing
+The engine doesn't just read text; it interrogates it. Our backend actively extracts URL entities and pings global **RDAP/WHOIS** registries to identify the registration age of target domains.
+*   *Heuristic:* Any domain under 180 days old claiming to be a major corporation triggers a **Critical Threat Alert**.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. Sovereign PDF Node (Privacy-First)
+Career documents contain highly sensitive personal data. Upholding our **Sovereign Mandate**, we leverage **WebAssembly (pdfjs-dist)** to parse PDF offer letters entirely within the user's browser RAM. No sensitive data ever touches our servers.
 
-## Learn More
+### 3. Synchronized Community Ledger
+Every neutralization is logged to a real-time, anonymous public ledger powered by **Supabase**. One student's scan strengthens the immune system of the entire global network.
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Viral Dispatch Engine
+When a threat is neutralized, the system generates high-fidelity **Imperial Cyber-Seal Dispatches**. These graphics are optimized for social node distribution (LinkedIn/X), allowing students to warn their peers with professional-grade security assets.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛠️ Technical Stack
+*   **Frontend:** Next.js 15 (App Router), Framer Motion, Tailwind CSS
+*   **Intelligence:** Gemini 2.5 Flash Node (Google Generative AI)
+*   **Persistence:** Supabase (PostgreSQL with Real-time Listeners)
+*   **Auth:** Clerk (Passwordless Sovereign Identity)
+*   **Forensics:** RDAP Protocol Integration, WASM-based PDF Extraction
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🤝 Open for Contribution
+We are building the world's most trusted student security authority. The Syndicate is open for community nodes.
+*   **Report Scams:** Run a scan to add signatures to the global ledger.
+*   **Code:** Submit PRs for new forensic modules (Email Header Analysis, Image Phishing Detection).
+*   **Advocate:** Distribute Dispatch Cards to your university channels.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🏁 Installation
+1. `npm install`
+2. Configure `.env` with GEMINI_API_KEY, SUPABASE_URL, and CLERK_KEYS.
+3. `npm run dev`
+
+---
+*Built for the DEV Weekend Challenge 2026. Stay Safe. Stay Sovereign.*
