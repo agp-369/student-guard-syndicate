@@ -20,13 +20,30 @@ export default function Dashboard() {
   const [showPassport, setShowPassport] = useState(false)
 
   useEffect(() => {
-    if (isLoaded && user) fetchUserHistory()
+    const supabase = getSupabase();
+    if (isLoaded && user && supabase) {
+      fetchUserHistory(supabase)
+      
+      // Real-time subscription for personal dashboard
+      const channel = supabase.channel(`user_threats_${user.id}`)
+        .on('postgres_changes', 
+          { event: 'INSERT', schema: 'public', table: 'community_threats', filter: `user_id=eq.${user.id}` }, 
+          (payload) => {
+            setHistory(prev => [payload.new, ...prev])
+          }
+        ).subscribe()
+        
+      return () => { supabase.removeChannel(channel) }
+    }
   }, [isLoaded, user])
 
-  const fetchUserHistory = async () => {
-    const supabase = getSupabase()
-    if (!supabase || !user) return
-    const { data } = await supabase.from('community_threats').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+  const fetchUserHistory = async (supabase: any) => {
+    const { data } = await supabase
+      .from('community_threats')
+      .select('*')
+      .eq('user_id', user?.id)
+      .order('created_at', { ascending: false })
+    
     if (data) setHistory(data)
     setIsLoading(false)
   }
@@ -92,7 +109,7 @@ export default function Dashboard() {
             {isLoading ? (
               <div className="py-20 text-center font-mono uppercase text-xs animate-pulse">Decrypting_History_Stream...</div>
             ) : history.length > 0 ? history.map((item, idx) => (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} key={idx} className="flex justify-between items-center p-6 rounded-2xl bg-accent/30 border border-border hover:bg-accent/50 transition-all group">
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, y: 0 }} key={idx} className="flex justify-between items-center p-6 rounded-2xl bg-accent/30 border border-border hover:bg-accent/50 transition-all group">
                 <div className="flex items-center gap-8">
                   <div className="h-10 w-10 rounded-xl bg-background border border-border flex items-center justify-center group-hover:text-primary transition-colors italic font-black text-xs">{idx + 1}</div>
                   <div>

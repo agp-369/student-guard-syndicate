@@ -5,6 +5,7 @@ import { ShieldCheck, Zap, Activity, Users, AlertTriangle, FileSearch, Loader2, 
 import { motion, AnimatePresence } from "framer-motion"
 import { DispatchCard } from "@/components/scam-alert-card"
 import { createClient } from "@supabase/supabase-js"
+import Link from "next/link"
 
 const getSupabase = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,10 +43,14 @@ export default function Home() {
     const supabase = getSupabase();
     if (!supabase) return;
     fetchCommunityData(supabase)
-    const channel = supabase.channel('threats')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
-        fetchCommunityData(supabase)
+    
+    // Real-time subscription for live feed
+    const channel = supabase.channel('threats_realtime_home')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, (payload) => {
+        setRecentThreats(prev => [payload.new, ...prev].slice(0, 5))
+        setDbCount(c => c + 1)
       }).subscribe()
+      
     return () => { supabase.removeChannel(channel) }
   }, [])
 
@@ -79,38 +84,21 @@ export default function Home() {
     if (!file) return
     setIsParsingPdf(true)
     try {
-      // 🛡️ RE-HARDENED WORKER PROTOCOL
-      const pdfjs = await import('pdfjs-dist')
-      // Use exact unpkg URL for the version installed
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
-      
+      const pdfjsLib = await import('pdfjs-dist')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.624/build/pdf.worker.min.mjs`
       const arrayBuffer = await file.arrayBuffer()
-      const loadingTask = pdfjs.getDocument({ 
-        data: arrayBuffer,
-        useSystemFonts: true,
-        isEvalSupported: false 
-      })
-      
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
       const pdf = await loadingTask.promise
       const meta = await pdf.getMetadata()
       setFileMeta(meta.info)
-
       let fullText = ""
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)
         const textContent = await page.getTextContent()
-        const strings = textContent.items.map((item: any) => item.str)
-        fullText += strings.join(" ") + "\n"
+        fullText += textContent.items.map((item: any) => item.str).join(" ") + " "
       }
-      
-      if (!fullText.trim()) throw new Error("ZERO_TEXT_EXTRACTED")
       setContent(fullText)
-    } catch (err) {
-      console.error("Forensic Node Failure:", err)
-      alert("Sovereign Node: Internal parsing failed. Please ensure the file is a text-based PDF or paste the content manually.")
-    } finally {
-      setIsParsingPdf(false)
-    }
+    } catch (err) { alert("Sovereign Node: Extraction Failure.") } finally { setIsParsingPdf(false) }
   }
 
   const runScan = async () => {
@@ -118,12 +106,10 @@ export default function Home() {
     setIsScanning(true); setResult(null); setScanStep(0);
     try {
       const res = await fetch("/api/scan", { method: "POST", body: JSON.stringify({ content, brandName, fileMeta }) })
-      const responseText = await res.text();
-      if (!res.ok) throw new Error(responseText);
-      const data = JSON.parse(responseText);
+      const data = await res.json()
       setResult(data)
       setNodeHealth(prev => Math.max(0, prev - 20))
-    } catch (e: any) { alert(`Sync Error: Node Offline`); } finally { setIsScanning(false) }
+    } catch (e: any) { alert(`Sync Error: Critical Node Failure`); } finally { setIsScanning(false) }
   }
 
   return (
@@ -133,8 +119,8 @@ export default function Home() {
 
       <header className="relative pt-32 md:pt-48 pb-16 px-6 z-10 text-center flex flex-col items-center">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.4em] shadow-[0_0_30px_rgba(99,102,241,0.1)]">
-            <Radio size={14} className="animate-pulse" /> Syndicate OS Version 2.5
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/5 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.4em] shadow-[0_0_40px_rgba(99,102,241,0.1)]">
+            <Radio size={14} className="animate-pulse" /> Syndicate Node Active
           </div>
           <h1 className="text-5xl md:text-8xl lg:text-9xl font-black tracking-tighter text-foreground leading-[0.8] uppercase italic drop-shadow-2xl text-center">
             Weaponize<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-emerald-400 animate-gradient-x">Intelligence.</span>
@@ -223,9 +209,9 @@ export default function Home() {
                   <div className="relative w-full">
                     <textarea className="w-full h-64 bg-background/80 border border-border rounded-3xl p-8 font-mono text-xs focus:border-primary outline-none text-foreground transition-all resize-none shadow-inner leading-relaxed" placeholder="PASTE RAW PAYLOAD (EMAILS, LINKS, OR MESSAGE TEXT)..." value={content} onChange={e => setContent(e.target.value)} />
                     <AnimatePresence>{isScanning && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-12 border-2 border-primary/30 z-30 text-center">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-background/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-8 border-2 border-primary/30 z-30 text-center">
                         <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="relative mb-10">
-                          <Cpu className="h-20 w-20 text-primary opacity-20" />
+                          <Cpu className="h-16 w-12 text-primary animate-pulse mb-8" />
                           <ShieldAlert className="absolute inset-0 m-auto h-10 w-10 text-primary animate-pulse" />
                         </motion.div>
                         <div className="w-full max-w-xs space-y-4">
@@ -258,7 +244,7 @@ export default function Home() {
                         </div>
                         <div className="text-center md:text-right space-y-3">
                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.5em] opacity-50 italic">Confidence</p>
-                          <div className="text-4xl md:text-5xl font-mono font-bold text-foreground">{result.trust_score || result.confidence}%</div>
+                          <div className="text-4xl md:text-5xl font-mono font-bold text-foreground">{(result.trust_score || result.confidence || 0)}%</div>
                         </div>
                       </div>
                       <p className="text-lg md:text-2xl font-medium text-foreground italic leading-relaxed border-l-0 md:border-l-8 border-primary pl-0 md:pl-10 py-4 text-center md:text-left leading-relaxed">"{result.analysis}"</p>
@@ -281,7 +267,7 @@ export default function Home() {
                 </div>
                 <div className="flex-1 flex flex-col space-y-6 w-full">
                   <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.5em] px-2 italic opacity-50 text-center md:text-left">Live_Intel_Stream</p>
-                  <div className="h-64 relative bg-zinc-950/80 rounded-[2rem] border border-zinc-800 p-6 font-mono text-[10px] overflow-hidden shadow-inner">
+                  <div className="h-64 relative bg-zinc-950/80 rounded-[2rem] border border-zinc-800 p-6 font-mono text-[10px] overflow-hidden shadow-inner text-left">
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
                     <div className="space-y-4">{recentThreats.map((t, i) => (
                       <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex gap-4">
@@ -291,19 +277,20 @@ export default function Home() {
                     ))}</div>
                   </div>
                 </div>
-                <div className="mt-8 p-6 rounded-3xl bg-primary text-background flex items-center gap-5 shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all w-full justify-center">
-                  <ShieldCheck size={32} />
-                  <div>
-                    <p className="text-[8px] font-black uppercase tracking-widest opacity-70 leading-none">Syndicate_Status</p>
-                    <p className="text-lg font-black uppercase italic mt-1 leading-none">Verified Authority</p>
+                <Link href="/manifesto" className="mt-8 p-6 rounded-3xl bg-primary text-background flex items-center gap-5 shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all w-full justify-center group">
+                  <ShieldCheck size={32} className="group-hover:rotate-12 transition-transform" />
+                  <div className="text-left">
+                    <p className="text-[8px] font-black uppercase tracking-widest opacity-70 leading-none">Syndicate_Protocol</p>
+                    <p className="text-lg font-black uppercase italic mt-1 leading-none">View Manifesto</p>
                   </div>
-                </div>
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Origin Story */}
       <section className="py-32 z-10 relative overflow-hidden border-t border-border flex flex-col items-center">
         <div className="max-w-5xl mx-auto px-6 text-center space-y-12">
           <div className="h-20 w-20 rounded-[2.5rem] bg-accent border border-border flex items-center justify-center mx-auto shadow-2xl"><Radio className="text-primary animate-pulse" /></div>

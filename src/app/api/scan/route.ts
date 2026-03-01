@@ -33,22 +33,28 @@ export async function POST(req: Request) {
     const { content, brandName, fileMeta } = await req.json();
     if (!content) return new NextResponse("PAYLOAD_NULL", { status: 400 });
 
-    // 1. FORENSIC PROBING (Domain + Behavior)
+    // 1. FORENSIC PROBING
     const domains = extractDomains(content);
     const domainResults = await Promise.all(domains.slice(0, 2).map(d => checkDomainAge(d)));
-    const forensicText = domainResults.map(r => r.raw).join("\n");
+    const forensicText = domainResults.map(r => r.raw).join("\n") || "NO_URLS_DETECTED";
 
-    // 2. INTELLIGENCE SYNTHESIS (Gemini 2.5 Flash)
+    // 2. INTELLIGENCE SYNTHESIS
     const systemInstruction = `
       You are 'Sentinel-1', the Syndicate's lead Forensic Analyst.
       TASK: Verify a job lead.
       
       CORE LOGIC:
-      - NO DOMAIN? Look for 'Off-Platform Redirection' (Telegram, WhatsApp, Signal).
-      - LEGIT DOMAIN? (e.g. gmail.com) Check if they are claiming to be a large corp. Real corps don't use Gmail.
+      - BRAND NEW DOMAINS (<180 days) = SCAM.
+      - GMAIL/OUTLOOK for large corps = SCAM.
       - SCAM MARKERS: Asking for 'Training Fees', 'Equipment Checks', 'Kindly', 'Immediate Start'.
       
-      OUTPUT: Return ONLY JSON with: verdict ("CLEAR", "CAUTION", "SCAM"), trust_score, red_flags, analysis (explain behavior + forensics), recommendation, category.
+      OUTPUT: Return ONLY valid JSON with:
+      - verdict: "CLEAR", "CAUTION", or "SCAM"
+      - trust_score: integer between 0 and 100 (NEVER 0 unless it's a confirmed high-risk scam)
+      - red_flags: array of strings
+      - analysis: 1-2 sentence explanation
+      - recommendation: actionable advice
+      - category: short category name
     `;
 
     const response = await generateAIResponse(`DATA:\n${content}\n\nFORENSICS:\n${forensicText}`, systemInstruction);
@@ -56,38 +62,38 @@ export async function POST(req: Request) {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       result = JSON.parse(jsonMatch ? jsonMatch[0] : response);
-      result.forensic_data = forensicText || "NO_DOMAIN_DETECTED: ANALYZING_SOCIAL_BEHAVIOR_PATTERNS...";
-    } catch (e) { return new NextResponse("INTEL_PARSE_ERROR", { status: 500 }); }
+      result.forensic_data = forensicText;
+      // Ensure trust_score is present
+      if (result.trust_score === undefined) result.trust_score = result.confidence || 50;
+    } catch (e) { 
+      console.error("AI Parse Error:", response);
+      return new NextResponse("INTEL_PARSE_ERROR", { status: 500 }); 
+    }
 
-    // 3. COMMUNITY SYNC
-    if (result.verdict === "SCAM") {
-      try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        
-        if (supabaseUrl && supabaseKey) {
-          const supabase = createClient(supabaseUrl, supabaseKey);
-          const { error: insertError } = await supabase.from('community_threats').insert({
-            brand_name: brandName || "UNDISCLOSED_ENTITY",
-            domain: domains[0] || "BEHAVIORAL_THREAT",
-            category: result.category || "GENERAL_FRAUD",
-            user_id: userId || "ANONYMOUS_NODE"
+    // 3. COMMUNITY SYNC - LOG EVERYTHING FOR DEMO VISIBILITY
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        // We log SCAMS to the threat board
+        if (result.verdict === "SCAM") {
+          await supabase.from('community_threats').insert({
+            brand_name: brandName || result.category || "UNKNOWN_THREAT",
+            domain: domains[0] || "BEHAVIORAL",
+            category: result.category || "SCAM",
+            user_id: userId || "anonymous"
           });
-          
-          if (insertError) {
-            console.error("SUPABASE INSERT ERROR (Check RLS Policies):", insertError);
-          }
-        } else {
-          console.error("SUPABASE CREDENTIALS MISSING. Cannot sync threat to grid.");
         }
-      } catch (syncErr) {
-        console.error("SYNDICATE SYNC EXCEPTION:", syncErr);
       }
+    } catch (syncErr) {
+      console.error("Sync Failure:", syncErr);
     }
 
     return NextResponse.json(result);
   } catch (error: any) { 
-    console.error("GLOBAL SCAN ROUTE ERROR:", error);
+    console.error("Global Error:", error);
     return new NextResponse("NODE_SYNC_FAILURE", { status: 500 }); 
   }
 }
