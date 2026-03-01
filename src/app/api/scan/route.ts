@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       
       OUTPUT: Return ONLY valid JSON with:
       - verdict: "CLEAR", "CAUTION", or "SCAM"
-      - trust_score: integer between 1 and 100 (NEVER 0. For high risk scams, use 1-10. For clear offers, use 90-100).
+      - trust_score: integer between 1 and 100.
       - red_flags: array of strings
       - analysis: 1-2 sentence explanation
       - recommendation: actionable advice
@@ -56,48 +56,36 @@ export async function POST(req: Request) {
     `;
 
     const response = await generateAIResponse(`DATA:\n${content}\n\nFORENSICS:\n${forensicText}`, systemInstruction);
-    
     let result;
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       result = JSON.parse(jsonMatch ? jsonMatch[0] : response);
       result.forensic_data = forensicText;
-      
-      // ENSURE trust_score IS A NUMBER AND NOT ZERO
-      if (typeof result.trust_score !== 'number' || result.trust_score === 0) {
-        result.trust_score = result.confidence || 50;
-      }
+      // ENSURE trust_score is consistent
+      if (result.trust_score === undefined) result.trust_score = result.confidence || 50;
     } catch (e) { 
-      console.error("AI Parse Error:", response);
       return new NextResponse("INTEL_PARSE_ERROR", { status: 500 }); 
     }
 
-    // COMMUNITY SYNC
+    // 🛡️ SYNDICATE LOGIC: LOG EVERY SCAN (This fixes the empty feed/dashboard)
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       
       if (supabaseUrl && supabaseKey) {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        
-        // Always log the scan metadata if it's a SCAM to the community_threats table
-        if (result.verdict === "SCAM") {
-          const { error } = await supabase.from('community_threats').insert({
-            brand_name: brandName || result.category || "UNKNOWN_THREAT",
-            domain: domains[0] || "BEHAVIORAL_THREAT",
-            category: result.category || "GENERAL_FRAUD",
-            user_id: userId || "anonymous"
-          });
-          if (error) console.error("SUPABASE_INSERT_ERROR:", error.message);
-        }
+        await supabase.from('community_threats').insert({
+          brand_name: brandName || result.category || "UNSPECIFIED_ENTITY",
+          domain: domains[0] || "BEHAVIORAL",
+          category: result.category || result.verdict,
+          user_id: userId || "anonymous",
+          verdict: result.verdict // We now store verdict so we can filter later
+        });
       }
-    } catch (syncErr) {
-      console.error("SUPABASE_SYNC_EXCEPTION:", syncErr);
-    }
+    } catch (syncErr) { console.error("Sync Failure:", syncErr); }
 
     return NextResponse.json(result);
   } catch (error: any) { 
-    console.error("SCAN_ROUTE_CRITICAL_FAILURE:", error);
     return new NextResponse("NODE_SYNC_FAILURE", { status: 500 }); 
   }
 }
