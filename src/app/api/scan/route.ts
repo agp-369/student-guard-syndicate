@@ -62,16 +62,32 @@ export async function POST(req: Request) {
     // 3. COMMUNITY SYNC
     if (result.verdict === "SCAM") {
       try {
-        const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-        await supabase.from('community_threats').insert({
-          brand_name: brandName || "UNDISCLOSED_ENTITY",
-          domain: domains[0] || "BEHAVIORAL_THREAT",
-          category: result.category || "GENERAL_FRAUD",
-          user_id: userId || "ANONYMOUS_NODE"
-        });
-      } catch (syncErr) {}
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (supabaseUrl && supabaseKey) {
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          const { error: insertError } = await supabase.from('community_threats').insert({
+            brand_name: brandName || "UNDISCLOSED_ENTITY",
+            domain: domains[0] || "BEHAVIORAL_THREAT",
+            category: result.category || "GENERAL_FRAUD",
+            user_id: userId || "ANONYMOUS_NODE"
+          });
+          
+          if (insertError) {
+            console.error("SUPABASE INSERT ERROR (Check RLS Policies):", insertError);
+          }
+        } else {
+          console.error("SUPABASE CREDENTIALS MISSING. Cannot sync threat to grid.");
+        }
+      } catch (syncErr) {
+        console.error("SYNDICATE SYNC EXCEPTION:", syncErr);
+      }
     }
 
     return NextResponse.json(result);
-  } catch (error: any) { return new NextResponse("NODE_SYNC_FAILURE", { status: 500 }); }
+  } catch (error: any) { 
+    console.error("GLOBAL SCAN ROUTE ERROR:", error);
+    return new NextResponse("NODE_SYNC_FAILURE", { status: 500 }); 
+  }
 }
