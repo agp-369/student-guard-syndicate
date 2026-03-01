@@ -1,16 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Search, ShieldCheck, ShieldAlert, Loader2, Globe, Radio } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
+import { Search, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-
-const getSupabase = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
+import { searchRegistry } from "@/lib/actions"
 
 export function ReputationSearch() {
   const [query, setQuery] = useState("")
@@ -18,26 +11,17 @@ export function ReputationSearch() {
   const [isSearching, setIsSearching] = useState(false)
 
   const handleSearch = async () => {
-    if (!query) return
+    if (!query || query.length < 2) return
     setIsSearching(true)
     setResult(null)
     
-    const supabase = getSupabase()
-    if (!supabase) return
+    // Using Server Action instead of client-side fetch
+    const response = await searchRegistry(query)
     
-    const { data } = await supabase
-      .from('community_threats')
-      .select('*')
-      .ilike('brand_name', `%${query}%`)
-      .limit(1)
+    // UX delay for "Probe" feeling
+    await new Promise(resolve => setTimeout(resolve, 600))
     
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    if (data && data.length > 0) {
-      setResult({ status: "THREAT", data: data[0] })
-    } else {
-      setResult({ status: "UNREPORTED" })
-    }
+    setResult(response)
     setIsSearching(false)
   }
 
@@ -50,7 +34,7 @@ export function ReputationSearch() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder="SEARCH_SYNDICATE_REGISTRY..." 
+          placeholder="SEARCH_SYNDICATE_REGISTRY (e.g. Acme)..." 
           className="w-full h-20 bg-card border-2 border-border rounded-[2.5rem] pl-16 pr-8 font-mono text-xs font-bold text-foreground outline-none focus:border-primary/50 transition-all relative z-10 shadow-2xl uppercase tracking-widest"
         />
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
@@ -69,19 +53,19 @@ export function ReputationSearch() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className={`p-8 rounded-[2.5rem] border-2 flex items-center justify-between gap-8 ${result.status === 'THREAT' ? 'bg-red-500/5 border-red-500/30' : 'bg-emerald-500/5 border-emerald-500/30'}`}
+            className={`p-8 rounded-[2.5rem] border-2 flex items-center justify-between gap-8 ${result.status === 'THREAT' ? 'bg-red-500/5 border-red-500/30' : result.status === 'ERROR' ? 'bg-amber-500/5 border-amber-500/30' : 'bg-emerald-500/5 border-emerald-500/30'}`}
           >
             <div className="flex items-center gap-6">
-              <div className={`h-16 w-16 rounded-2xl flex items-center justify-center border ${result.status === 'THREAT' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+              <div className={`h-16 w-16 rounded-2xl flex items-center justify-center border ${result.status === 'THREAT' ? 'bg-red-500/10 text-red-500 border-red-500/20' : result.status === 'ERROR' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
                 {result.status === 'THREAT' ? <ShieldAlert size={32} /> : <ShieldCheck size={32} />}
               </div>
               <div className="space-y-1 text-left">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60 italic">Syndicate_Resolution</p>
-                <h4 className="text-2xl font-black uppercase italic tracking-tighter text-foreground text-left">
-                  {result.status === 'THREAT' ? `Threat_Detected: ${result.data.brand_name}` : "Entity_Not_Flagged"}
+                <h4 className="text-2xl font-black uppercase italic tracking-tighter text-foreground text-left leading-none">
+                  {result.status === 'THREAT' ? `Threat_Detected: ${result.data.brand_name}` : result.status === 'ERROR' ? "Network_Sync_Issue" : "Entity_Not_Flagged"}
                 </h4>
-                <p className="text-xs font-medium text-muted-foreground italic text-left">
-                  {result.status === 'THREAT' ? `Neutralized by community. Avoid all contact.` : "No active threats found in global registry."}
+                <p className="text-xs font-medium text-muted-foreground italic text-left mt-2">
+                  {result.status === 'THREAT' ? `Neutralized by community. Avoid all contact.` : result.status === 'ERROR' ? "Server probe timed out. Please try again." : "No active threats found in global registry."}
                 </p>
               </div>
             </div>

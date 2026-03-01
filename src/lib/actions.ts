@@ -51,3 +51,19 @@ export async function getGlobalStats() {
     return { count: 0 };
   }
 }
+
+export async function searchRegistry(query: string) {
+  try {
+    const { data, error } = await supabase
+      .from('community_threats')
+      .select('*')
+      .ilike('brand_name', `%${query}%`)
+      .limit(1);
+    
+    if (error) throw error;
+    return data && data.length > 0 ? { status: "THREAT", data: data[0] } : { status: "UNREPORTED" };
+  } catch (e) {
+    console.error("Server Action Error (Search):", e);
+    return { status: "ERROR" };
+  }
+}
