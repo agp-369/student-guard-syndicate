@@ -8,9 +8,6 @@ import { ReputationSearch } from "@/components/reputation-search"
 import { createClient } from "@supabase/supabase-js"
 import Link from "next/link"
 
-// FORCE DYNAMIC TO PREVENT CACHING
-export const revalidate = 0;
-
 const getSupabase = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -51,14 +48,11 @@ export default function Home() {
     fetchCommunityData(supabase)
     
     // HARDENED REAL-TIME UPLINK
-    const channel = supabase.channel('syndicate_global_feed')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, (payload) => {
-        console.log("SYNDICATE_REALTIME_EVENT:", payload.new);
-        fetchCommunityData(supabase) // Re-fetch everything to ensure sync
+    const channel = supabase.channel('syndicate_global_feed_v4')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
+        fetchCommunityData(supabase)
       })
-      .subscribe((status) => {
-        console.log("SYNDICATE_REALTIME_STATUS:", status);
-      })
+      .subscribe()
       
     return () => { supabase.removeChannel(channel) }
   }, [])
@@ -70,7 +64,6 @@ export default function Home() {
     if (data && data.length > 0) {
       setRecentThreats(data)
     } else {
-      // Fallback if DB is literally empty
       setRecentThreats([
         { brand_name: "Awaiting New Data...", domain: "syndicate.node", category: "UPLINK_STABLE", created_at: new Date().toISOString() }
       ])
@@ -120,7 +113,6 @@ export default function Home() {
       if (!res.ok) throw new Error("Intelligence Node Connection Error");
       const data = await res.json()
       
-      // Heuristic Fallback for Trust Score
       if (!data.trust_score || data.trust_score === 0) {
         data.trust_score = data.verdict === "SCAM" ? 4 : 96;
       }
@@ -128,7 +120,6 @@ export default function Home() {
       setResult(data)
       setNodeHealth(prev => Math.max(0, prev - 20))
       
-      // Manual sync trigger
       const supabase = getSupabase();
       if (supabase) fetchCommunityData(supabase);
       
@@ -232,7 +223,6 @@ export default function Home() {
 
                 <button onClick={runScan} disabled={isScanning || !content || nodeHealth < 10} className="mt-10 w-full h-24 text-2xl font-black rounded-3xl bg-foreground text-background hover:scale-[1.01] transition-all uppercase tracking-[0.4em] flex items-center justify-center gap-6 dark:bg-white dark:text-black shadow-2xl disabled:opacity-20 italic">{isScanning ? "PROBING..." : "INITIATE SCAN"}</button>
 
-                {/* THE OUTPUT MANIFEST */}
                 {result && (
                   <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="mt-16 space-y-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -281,17 +271,15 @@ export default function Home() {
                   <PulseMetric label="Active_Nodes" value={activeNodes} color="text-emerald-400" />
                 </div>
                 <div className="flex-1 flex flex-col space-y-6 w-full">
-                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.5em] px-2 italic opacity-50">Live_Intel_Stream</p>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.5em] px-2 italic opacity-50 text-center md:text-left">Live_Intel_Stream</p>
                   <div className="h-64 relative bg-zinc-950/80 rounded-[2rem] border border-zinc-800 p-6 font-mono text-[10px] overflow-hidden shadow-inner text-left">
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
-                    <div className="space-y-4">
-                      {recentThreats.map((t, i) => (
-                        <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex gap-4">
-                          <span className="text-red-500/60 shrink-0">[{new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>
-                          <span className="text-zinc-400 truncate uppercase tracking-tighter font-bold">{t.brand_name}</span>
-                        </motion.div>
-                      ))}
-                    </div>
+                    <div className="space-y-4">{recentThreats.map((t, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex gap-4">
+                        <span className="text-red-500/60 shrink-0">[{new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>
+                        <span className="text-zinc-400 truncate uppercase tracking-tighter font-bold">{t.brand_name}</span>
+                      </motion.div>
+                    ))}</div>
                   </div>
                 </div>
                 <Link href="/manifesto" className="mt-8 p-6 rounded-3xl bg-primary text-background flex items-center gap-5 shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all w-full justify-center group">
@@ -312,7 +300,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-6 space-y-12">
           <div className="h-20 w-20 rounded-[2.5rem] bg-accent border border-border flex items-center justify-center mx-auto shadow-2xl"><Radio className="text-primary animate-pulse" /></div>
           <h2 className="text-4xl md:text-7xl font-black text-foreground uppercase italic tracking-tighter leading-tight">Built because<br /><span className="text-primary">Silence is a Scam.</span></h2>
-          <p className="text-base md:text-2xl text-muted-foreground font-medium italic leading-relaxed max-w-3xl mx-auto px-4">"One student's silence is a scammer's best friend. We built the Syndicate because the only way to beat automated malice is with collective intelligence."</p>
+          <p className="text-base md:text-2xl text-muted-foreground font-medium italic leading-relaxed max-w-3xl mx-auto px-4 leading-relaxed">"One student's silence is a scammer's best friend. We built the Syndicate because the only way to beat automated malice is with collective intelligence."</p>
         </div>
       </section>
     </div>
