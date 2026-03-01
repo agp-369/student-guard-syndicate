@@ -18,24 +18,17 @@ export default function IntelligenceHub() {
   const [isLoading, setIsLoading] = useState(true)
   const [view, setView] = useState("scams") // "scams" | "verified"
 
-  useEffect(() => {
+  useEffect(() => { 
     const supabase = getSupabase();
-    if (!supabase) return;
-    fetchThreats(supabase)
-    
-    const channel = supabase.channel('threats_hub')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
-        fetchThreats(supabase)
-      }).subscribe()
-      
-    return () => { supabase.removeChannel(channel) }
-  }, [view]) // Re-fetch when view changes
+    if (supabase) {
+      fetchThreats(supabase) 
+    } else {
+      setIsLoading(false)
+    }
+  }, [view])
 
   const fetchThreats = async (supabase: any) => {
     setIsLoading(true)
-    // In our simplified logic, SCAMs go to community_threats.
-    // If we wanted to show "verified" ones, we'd need another table or a flag.
-    // For now, we show all neutralized scams in the manifest.
     const { data } = await supabase
       .from('community_threats')
       .select('*')
@@ -110,9 +103,9 @@ export default function IntelligenceHub() {
             <Loader2 className="animate-spin" /> Uplinking to Syndicate Database...
           </div>
         ) : view === "scams" && threats.length > 0 ? threats.map((t, i) => (
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} key={t.id} className="p-6 rounded-[2rem] bg-card border border-border hover:border-primary/30 transition-all flex flex-col md:flex-row items-center justify-between gap-8 group">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} key={t.id} className="p-6 rounded-[2rem] bg-card border border-border hover:border-primary/30 transition-all flex flex-col md:flex-row items-center justify-between gap-8 group">
             <div className="flex items-center gap-6 w-full">
-              <div className="h-14 w-14 rounded-2xl flex items-center justify-center border bg-red-500/5 text-red-500 border-red-500/20">
+              <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border bg-red-500/5 text-red-500 border-red-500/20`}>
                 <ShieldAlert size={24} />
               </div>
               <div>

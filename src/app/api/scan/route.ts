@@ -33,12 +33,10 @@ export async function POST(req: Request) {
     const { content, brandName, fileMeta } = await req.json();
     if (!content) return new NextResponse("PAYLOAD_NULL", { status: 400 });
 
-    // 1. FORENSIC PROBING
     const domains = extractDomains(content);
     const domainResults = await Promise.all(domains.slice(0, 2).map(d => checkDomainAge(d)));
     const forensicText = domainResults.map(r => r.raw).join("\n") || "NO_URLS_DETECTED";
 
-    // 2. INTELLIGENCE SYNTHESIS
     const systemInstruction = `
       You are 'Sentinel-1', the Syndicate's lead Forensic Analyst.
       TASK: Verify a job lead.
@@ -50,7 +48,7 @@ export async function POST(req: Request) {
       
       OUTPUT: Return ONLY valid JSON with:
       - verdict: "CLEAR", "CAUTION", or "SCAM"
-      - trust_score: integer between 0 and 100 (NEVER 0 unless it's a confirmed high-risk scam)
+      - trust_score: integer between 1 and 100 (NEVER 0. For high risk scams, use 1-10. For clear offers, use 90-100).
       - red_flags: array of strings
       - analysis: 1-2 sentence explanation
       - recommendation: actionable advice
@@ -58,42 +56,48 @@ export async function POST(req: Request) {
     `;
 
     const response = await generateAIResponse(`DATA:\n${content}\n\nFORENSICS:\n${forensicText}`, systemInstruction);
+    
     let result;
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       result = JSON.parse(jsonMatch ? jsonMatch[0] : response);
       result.forensic_data = forensicText;
-      // Ensure trust_score is present
-      if (result.trust_score === undefined) result.trust_score = result.confidence || 50;
+      
+      // ENSURE trust_score IS A NUMBER AND NOT ZERO
+      if (typeof result.trust_score !== 'number' || result.trust_score === 0) {
+        result.trust_score = result.confidence || 50;
+      }
     } catch (e) { 
       console.error("AI Parse Error:", response);
       return new NextResponse("INTEL_PARSE_ERROR", { status: 500 }); 
     }
 
-    // 3. COMMUNITY SYNC - LOG EVERYTHING FOR DEMO VISIBILITY
+    // COMMUNITY SYNC
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       
       if (supabaseUrl && supabaseKey) {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        // We log SCAMS to the threat board
+        
+        // Always log the scan metadata if it's a SCAM to the community_threats table
         if (result.verdict === "SCAM") {
-          await supabase.from('community_threats').insert({
+          const { error } = await supabase.from('community_threats').insert({
             brand_name: brandName || result.category || "UNKNOWN_THREAT",
-            domain: domains[0] || "BEHAVIORAL",
-            category: result.category || "SCAM",
+            domain: domains[0] || "BEHAVIORAL_THREAT",
+            category: result.category || "GENERAL_FRAUD",
             user_id: userId || "anonymous"
           });
+          if (error) console.error("SUPABASE_INSERT_ERROR:", error.message);
         }
       }
     } catch (syncErr) {
-      console.error("Sync Failure:", syncErr);
+      console.error("SUPABASE_SYNC_EXCEPTION:", syncErr);
     }
 
     return NextResponse.json(result);
   } catch (error: any) { 
-    console.error("Global Error:", error);
+    console.error("SCAN_ROUTE_CRITICAL_FAILURE:", error);
     return new NextResponse("NODE_SYNC_FAILURE", { status: 500 }); 
   }
 }
