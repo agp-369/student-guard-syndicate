@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { ShieldCheck, Zap, Activity, Users, AlertTriangle, FileSearch, Loader2, Globe, Terminal, ShieldAlert, Cpu, FileUp, Database, Radio, Network, CheckCircle2, Fingerprint, Search, Lock, Eye, BarChart3, Award, LayoutGrid, FileText } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { DispatchCard } from "@/components/scam-alert-card"
+import { ReputationSearch } from "@/components/reputation-search"
 import { createClient } from "@supabase/supabase-js"
 import Link from "next/link"
 
@@ -136,6 +137,17 @@ export default function Home() {
           <VisualStoryNode icon={<FileSearch size={40} className="text-indigo-400" />} title="Deep DNA Probe" desc="Identify metadata forgeries and suspicious RDAP registry age instantly." />
           <VisualStoryNode icon={<Globe size={40} className="text-emerald-400" />} title="Network Immunity" desc="Cross-reference collective threat signatures in the community ledger." />
           <VisualStoryNode icon={<ShieldCheck size={40} className="text-primary" />} title="Verified Clearance" desc="Receive cryptographic proof of legitimacy for your career leads." />
+        </div>
+      </section>
+
+      {/* SYNDICATE REGISTRY SEARCH */}
+      <section className="py-24 z-10 relative">
+        <div className="max-w-4xl mx-auto px-6 space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">Syndicate <span className="text-primary">Registry.</span></h2>
+            <p className="text-muted-foreground font-medium italic">"Search the community database for known entity signatures before initiating a deep probe."</p>
+          </div>
+          <ReputationSearch />
         </div>
       </section>
 
