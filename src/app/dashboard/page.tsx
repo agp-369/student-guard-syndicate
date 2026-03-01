@@ -24,34 +24,47 @@ export default function Dashboard() {
     if (isLoaded && user && supabase) {
       fetchUserHistory(supabase)
       
-      // Real-time subscription for personal dashboard
       const channel = supabase.channel(`user_threats_${user.id}`)
         .on('postgres_changes', 
-          { event: 'INSERT', schema: 'public', table: 'community_threats', filter: `user_id=eq.${user.id}` }, 
+          { event: 'INSERT', schema: 'public', table: 'community_threats' }, 
           (payload) => {
-            setHistory(prev => [payload.new, ...prev])
+            // Only update if the new threat belongs to this user
+            if (payload.new.user_id === user.id) {
+              setHistory(prev => [payload.new, ...prev])
+            }
           }
         ).subscribe()
         
       return () => { supabase.removeChannel(channel) }
+    } else if (isLoaded && !user) {
+      setIsLoading(false)
     }
   }, [isLoaded, user])
 
   const fetchUserHistory = async (supabase: any) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('community_threats')
       .select('*')
       .eq('user_id', user?.id)
       .order('created_at', { ascending: false })
     
+    if (error) console.error("History Fetch Error:", error.message)
     if (data) setHistory(data)
     setIsLoading(false)
   }
 
   if (!isLoaded) return <div className="py-48 text-center"><Loader2 className="animate-spin h-12 w-12 mx-auto text-primary" /></div>
 
+  if (!user) return (
+    <div className="max-w-7xl mx-auto px-6 py-48 text-center space-y-6">
+      <ShieldAlert size={64} className="mx-auto text-primary opacity-20" />
+      <h1 className="text-4xl font-black uppercase italic tracking-tighter">Authentication Required.</h1>
+      <p className="text-muted-foreground italic">"Join the Syndicate to access your personal defense ledger and sovereign identity."</p>
+    </div>
+  )
+
   return (
-    <div className="max-w-7xl mx-auto px-6 py-32 space-y-16">
+    <div className="max-w-7xl mx-auto px-6 py-32 space-y-16 text-left">
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-12">
         <div className="flex flex-col md:flex-row gap-12 items-center">
@@ -109,7 +122,7 @@ export default function Dashboard() {
             {isLoading ? (
               <div className="py-20 text-center font-mono uppercase text-xs animate-pulse">Decrypting_History_Stream...</div>
             ) : history.length > 0 ? history.map((item, idx) => (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, y: 0 }} key={idx} className="flex justify-between items-center p-6 rounded-2xl bg-accent/30 border border-border hover:bg-accent/50 transition-all group">
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} key={idx} className="flex justify-between items-center p-6 rounded-2xl bg-accent/30 border border-border hover:bg-accent/50 transition-all group">
                 <div className="flex items-center gap-8">
                   <div className="h-10 w-10 rounded-xl bg-background border border-border flex items-center justify-center group-hover:text-primary transition-colors italic font-black text-xs">{idx + 1}</div>
                   <div>
@@ -132,9 +145,9 @@ export default function Dashboard() {
           <div className="p-10 rounded-[3rem] bg-primary text-background space-y-8 relative overflow-hidden group shadow-2xl shadow-primary/20">
             <div className="absolute -top-10 -right-10 opacity-10 group-hover:scale-110 transition-transform duration-700"><Award size={250} /></div>
             <h3 className="text-3xl font-black uppercase italic leading-none relative z-10 text-white">Syndicate<br />Authority.</h3>
-            <div className="space-y-2 relative z-10">
+            <div className="space-y-2 relative z-10 text-white">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Node Security Level</p>
-              <p className="text-5xl font-black text-white font-mono">{Math.floor(history.length / 2) + 1}</p>
+              <p className="text-5xl font-black font-mono">{Math.floor(history.length / 2) + 1}</p>
             </div>
             <div className="h-1 w-full bg-black/20 rounded-full overflow-hidden relative z-10">
               <div className="h-full bg-white" style={{ width: `${(history.length % 2) * 50 + 10}%` }} />
@@ -150,13 +163,12 @@ export default function Dashboard() {
               <ProtocolRow label="RDAP_PROBE" status="ACTIVE" color="text-emerald-500" />
               <ProtocolRow label="METADATA_ANALYSIS" status="ACTIVE" color="text-emerald-500" />
               <ProtocolRow label="GEMINI_UPLINK" status="ACTIVE" color="text-emerald-500" />
-              <ProtocolRow label="GLOBAL_TICKER" status="STANDBY" color="text-primary" />
+              <ProtocolRow label="GLOBAL_TICKER" status="ACTIVE" color="text-emerald-500" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* SOVEREIGN PASSPORT MODAL */}
       <AnimatePresence>
         {showPassport && (
           <motion.div 
@@ -166,17 +178,16 @@ export default function Dashboard() {
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-              className="w-[450px] aspect-[1.6/1] bg-zinc-950 rounded-[2.5rem] border-2 border-primary/30 p-10 relative overflow-hidden shadow-[0_0_100px_rgba(99,102,241,0.2)]"
+              className="w-[450px] aspect-[1.6/1] bg-zinc-950 rounded-[2.5rem] border-2 border-primary/30 p-10 relative overflow-hidden shadow-[0_0_100px_rgba(99,102,241,0.2)] text-white"
               onClick={e => e.stopPropagation()}
             >
-              {/* Holographic Accents */}
               <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:20px_20px]" />
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-emerald-500/10" />
               
               <div className="flex justify-between items-start relative z-10">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-white"><ShieldAlert size={24} /></div>
-                  <div className="leading-none">
+                  <div className="leading-none text-left">
                     <p className="text-[10px] font-black uppercase italic">StudentGuard</p>
                     <p className="text-primary font-bold text-[7px] uppercase tracking-[0.4em]">SOVEREIGN_ID</p>
                   </div>
@@ -188,7 +199,7 @@ export default function Dashboard() {
                 <div className="h-24 w-20 bg-zinc-900 border border-white/5 rounded-xl flex items-center justify-center overflow-hidden grayscale">
                   {user?.imageUrl ? <img src={user.imageUrl} className="h-full w-full object-cover opacity-50" /> : <UserIcon className="text-zinc-800" />}
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-4 text-left">
                   <div className="space-y-1">
                     <p className="text-[7px] font-black uppercase text-zinc-500 tracking-[0.3em]">Identity_Manifest</p>
                     <h4 className="text-xl font-black uppercase italic tracking-tighter">{user?.fullName?.toUpperCase()}</h4>
@@ -214,7 +225,6 @@ export default function Dashboard() {
                 <p className="text-[8px] font-black italic uppercase text-zinc-400">Protect the community.</p>
               </div>
 
-              {/* Design Glitch */}
               <div className="absolute -bottom-10 -right-10 opacity-5 rotate-12"><Globe size={200} /></div>
             </motion.div>
           </motion.div>
@@ -228,7 +238,7 @@ function StatCard({ icon, label, value }: any) {
   return (
     <div className="p-8 rounded-[2.5rem] bg-card border border-border shadow-xl space-y-4 hover:border-primary/30 transition-all group">
       <div className="h-12 w-12 rounded-2xl bg-accent flex items-center justify-center group-hover:scale-110 transition-transform">{icon}</div>
-      <div>
+      <div className="text-left">
         <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{label}</p>
         <p className="text-4xl font-black text-foreground font-mono mt-1">{value}</p>
       </div>
