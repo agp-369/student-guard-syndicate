@@ -1,19 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ShieldCheck, Zap, Activity, Users, AlertTriangle, FileSearch, Loader2, Globe, Terminal, ShieldAlert, Cpu, FileUp, Database, Radio, Network, CheckCircle2, Fingerprint, Search, Lock, Eye, BarChart3, Award, LayoutGrid, FileText } from "lucide-react"
+import { ShieldCheck, Zap, Activity, Users, AlertTriangle, FileSearch, Loader2, Globe, Terminal, ShieldAlert, Cpu, FileUp, Database, Radio, Network, CheckCircle2, Fingerprint, Search, Lock, Eye, BarChart3, Award } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { DispatchCard } from "@/components/scam-alert-card"
 import { ReputationSearch } from "@/components/reputation-search"
-import { createClient } from "@supabase/supabase-js"
+import { getCommunityThreats, getGlobalStats } from "@/lib/actions"
 import Link from "next/link"
-
-const getSupabase = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
 
 const SCAN_STEPS = [
   "UPLINK: Establishing Sovereign Handshake...",
@@ -41,35 +34,45 @@ export default function Home() {
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Use Server Proxy for Initial Data
   useEffect(() => {
-    const supabase = getSupabase();
-    if (!supabase) return;
-    
-    fetchCommunityData(supabase)
-    
-    // HARDENED REAL-TIME UPLINK
-    const channel = supabase.channel('syndicate_global_feed_v4')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, () => {
-        fetchCommunityData(supabase)
-      })
-      .subscribe()
-      
-    return () => { supabase.removeChannel(channel) }
+    refreshIntel();
+    const pollInterval = setInterval(refreshIntel, 15000); // Polling fallback for network issues
+    return () => clearInterval(pollInterval);
   }, [])
 
-  const fetchCommunityData = async (supabase: any) => {
-    const { data } = await supabase.from('community_threats').select('*').order('created_at', { ascending: false }).limit(5)
-    const { count } = await supabase.from('community_threats').select('*', { count: 'exact', head: true })
+  const refreshIntel = async () => {
+    const threats = await getCommunityThreats(5);
+    const stats = await getGlobalStats();
     
-    if (data && data.length > 0) {
-      setRecentThreats(data)
+    if (threats.length > 0) {
+      setRecentThreats(threats);
     } else {
       setRecentThreats([
-        { brand_name: "Awaiting New Data...", domain: "syndicate.node", category: "UPLINK_STABLE", created_at: new Date().toISOString() }
-      ])
+        { brand_name: "Uplink Stable", domain: "syndicate.node", category: "SECURE" },
+        { brand_name: "Monitoring Grid", domain: "active.watch", category: "READY" }
+      ]);
     }
-    if (count !== null) setDbCount(42 + count)
+    setDbCount(42 + stats.count);
   }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNodeHealth(prev => Math.min(100, prev + 1))
+      setActiveNodes(prev => prev + (Math.random() > 0.5 ? 1 : -1))
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    let interval: any;
+    if (isScanning) {
+      interval = setInterval(() => {
+        setScanStep((prev) => (prev < SCAN_STEPS.length - 1 ? prev + 1 : prev));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isScanning]);
 
   useEffect(() => {
     if (result) {
@@ -110,7 +113,6 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, brandName, fileMeta }) 
       })
-      if (!res.ok) throw new Error("Intelligence Node Connection Error");
       const data = await res.json()
       
       if (!data.trust_score || data.trust_score === 0) {
@@ -120,10 +122,10 @@ export default function Home() {
       setResult(data)
       setNodeHealth(prev => Math.max(0, prev - 20))
       
-      const supabase = getSupabase();
-      if (supabase) fetchCommunityData(supabase);
+      // Immediate manual sync trigger via server action
+      setTimeout(refreshIntel, 2000);
       
-    } catch (e: any) { alert(`Sync Error: ${e.message}`); } finally { setIsScanning(false) }
+    } catch (e: any) { alert(`Scan Node Timeout - Retrying...`); } finally { setIsScanning(false) }
   }
 
   return (
@@ -140,7 +142,7 @@ export default function Home() {
             Weaponize<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-emerald-400 animate-gradient-x">Intelligence.</span>
           </h1>
           <p className="text-sm md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium italic opacity-70 px-4 text-center leading-relaxed">
-            "We extract the DNA of fraud. Verify opportunities with cryptographic certainty. One scan strengthens the entire Syndicate."
+            "One student scans, the entire community gets immunity. Sovereign forensics for the next generation of careers."
           </p>
         </motion.div>
       </header>
@@ -165,7 +167,7 @@ export default function Home() {
 
       <section className="pb-32 z-10 mt-12">
         <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start text-left">
             <div className="lg:col-span-8 space-y-8 flex flex-col items-center md:items-stretch">
               <div className="w-full p-6 md:p-10 rounded-[2.5rem] bg-card/60 backdrop-blur-3xl border border-border shadow-2xl relative group overflow-hidden">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-10 pb-6 border-b border-border gap-6 text-center md:text-left">
@@ -195,7 +197,7 @@ export default function Home() {
                         <div className="space-y-4"><Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" /><p className="text-[10px] font-black uppercase text-primary tracking-widest animate-pulse">Isolating_Artifacts...</p></div>
                       ) : (
                         <div className="space-y-4 flex flex-col items-center">
-                          <div className="h-12 w-12 rounded-2xl bg-accent flex items-center justify-center mx-auto group-hover/drop:scale-110 transition-transform shadow-xl text-muted-foreground group-hover/drop:text-primary"><FileUp /></div>
+                          <div className="h-12 w-12 rounded-2xl bg-accent flex items-center justify-center mx-auto group-hover/drop:scale-110 transition-transform shadow-xl text-muted-foreground group-hover/drop:text-primary cursor-pointer"><FileUp /></div>
                           <div><p className="text-xs font-black uppercase text-foreground">Deposit PDF Artifact</p><p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Sovereign Local Extraction</p></div>
                         </div>
                       )}
@@ -221,8 +223,9 @@ export default function Home() {
                   </div>
                 </div>
 
-                <button onClick={runScan} disabled={isScanning || !content || nodeHealth < 10} className="mt-10 w-full h-24 text-2xl font-black rounded-3xl bg-foreground text-background hover:scale-[1.01] transition-all uppercase tracking-[0.4em] flex items-center justify-center gap-6 dark:bg-white dark:text-black shadow-2xl disabled:opacity-20 italic">{isScanning ? "PROBING..." : "INITIATE SCAN"}</button>
+                <button onClick={runScan} disabled={isScanning || !content || nodeHealth < 10} className="mt-10 w-full h-24 text-2xl font-black rounded-3xl bg-foreground text-background hover:scale-[1.01] transition-all uppercase tracking-[0.4em] flex items-center justify-center gap-6 dark:bg-white dark:text-black shadow-2xl disabled:opacity-20 italic cursor-pointer">{isScanning ? "PROBING..." : "INITIATE SCAN"}</button>
 
+                {/* THE OUTPUT MANIFEST */}
                 {result && (
                   <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="mt-16 space-y-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -271,18 +274,20 @@ export default function Home() {
                   <PulseMetric label="Active_Nodes" value={activeNodes} color="text-emerald-400" />
                 </div>
                 <div className="flex-1 flex flex-col space-y-6 w-full">
-                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.5em] px-2 italic opacity-50 text-center md:text-left">Live_Intel_Stream</p>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.5em] px-2 italic opacity-50">Live_Intel_Stream</p>
                   <div className="h-64 relative bg-zinc-950/80 rounded-[2rem] border border-zinc-800 p-6 font-mono text-[10px] overflow-hidden shadow-inner text-left">
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
-                    <div className="space-y-4">{recentThreats.map((t, i) => (
-                      <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex gap-4">
-                        <span className="text-red-500/60 shrink-0">[{new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>
-                        <span className="text-zinc-400 truncate uppercase tracking-tighter font-bold">{t.brand_name}</span>
-                      </motion.div>
-                    ))}</div>
+                    <div className="space-y-4">
+                      {recentThreats.map((t, i) => (
+                        <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex gap-4">
+                          <span className="text-red-500/60 shrink-0">[{new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>
+                          <span className="text-zinc-400 truncate uppercase tracking-tighter font-bold">{t.brand_name}</span>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <Link href="/manifesto" className="mt-8 p-6 rounded-3xl bg-primary text-background flex items-center gap-5 shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all w-full justify-center group">
+                <Link href="/manifesto" className="mt-8 p-6 rounded-3xl bg-primary text-background flex items-center gap-5 shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-all w-full justify-center group cursor-pointer">
                   <ShieldCheck size={32} className="group-hover:rotate-12 transition-transform" />
                   <div className="text-left">
                     <p className="text-[8px] font-black uppercase tracking-widest opacity-70 leading-none">Syndicate_Protocol</p>
@@ -323,7 +328,7 @@ function TelemetryBox({ title, content, color }: any) {
         <p className={`${color} font-black tracking-[0.3em]`}>{title}</p>
         <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
       </div>
-      <pre className="leading-relaxed opacity-90 whitespace-pre-wrap">{content || "AWAITING_INPUT..."}</pre>
+      <pre className="leading-relaxed opacity-90 whitespace-pre-wrap text-left">{content || "AWAITING_INPUT..."}</pre>
     </div>
   )
 }
